@@ -24,6 +24,14 @@
     .players { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
     .pill { padding:6px 10px; border-radius:999px; border:1px solid #2a3950; color:#cfe0ff; font-size:12px; }
     .pill.active { background:#2a63ff; border-color:#2a63ff; color:#fff; }
+ #next{
+  grid-column: 1 / -1;   /* 2列レイアウトを横断して1列ぶち抜き */
+  min-height: 72px;      /* 高さを大きく */
+  font-size: 22px;       /* 文字を大きく */
+  border-radius: 18px;   /* 角丸も少し大きく */
+ }
+  
+  
   </style>
 </head>
 <body>
@@ -219,4 +227,5 @@
 </script>
 </body>
 </html>
+
 
