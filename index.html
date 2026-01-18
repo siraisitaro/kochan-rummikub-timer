@@ -30,7 +30,29 @@
   font-size: 22px;       /* 文字を大きく */
   border-radius: 18px;   /* 角丸も少し大きく */
  }
-  
+  /* 下に次へボタンを固定するための余白（固定ボタンに隠れないように） */
+body { padding-bottom: 120px; }
+
+/* 次へボタン：画面下に固定して巨大化 */
+#next{
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 999;
+
+  min-height: 84px;
+  font-size: 26px;
+  border-radius: 22px;
+
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+/* 次へ以外のボタンは少し小さめにして“主役”を明確化（任意） */
+.btns button:not(#next){
+  min-height: 52px;
+  font-size: 16px;
+}
   
   </style>
 </head>
@@ -220,12 +242,40 @@
   nextEl.addEventListener("click", nextPlayer);
   pauseEl.addEventListener("click", () => { stopTimer(); hintEl.textContent = "一時停止中"; });
   undoEl.addEventListener("click", undo);
-  resetEl.addEventListener("click", () => { applySettings(); hintEl.textContent = "リセット"; });
+  let resetArmed = false;
+let resetTimer = null;
+
+function armReset() {
+  resetArmed = true;
+  resetEl.textContent = "もう一度押すとリセット";
+  hintEl.textContent = "リセット確認中（5秒以内にもう一度）";
+
+  clearTimeout(resetTimer);
+  resetTimer = setTimeout(() => {
+    resetArmed = false;
+    resetEl.textContent = "リセット";
+    hintEl.textContent = "キャンセル";
+  }, 5000);
+}
+
+resetEl.addEventListener("click", () => {
+  if (!resetArmed) {
+    armReset();
+    beep();
+    return;
+  }
+  // 確定リセット
+  applySettings();
+  hintEl.textContent = "リセット完了";
+  resetArmed = false;
+  resetEl.textContent = "リセット";
+});
 
   applySettings();
 })();
 </script>
 </body>
 </html>
+
 
 
