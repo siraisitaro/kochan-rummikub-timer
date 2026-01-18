@@ -6,54 +6,51 @@
   <title>Rummikub Turn Timer Developed by KoChan</title>
   <style>
     :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-    body { margin: 0; background:#0b0f14; color:#e8eef6; }
+
+    /* 固定の「次へ」ボタンに隠れないように下に余白を確保 */
+    body { margin: 0; background:#0b0f14; color:#e8eef6; padding-bottom: 190px; }
+
     .wrap { max-width: 720px; margin: 0 auto; padding: 16px; }
     .card { background:#121a24; border:1px solid #1f2a3a; border-radius:16px; padding:16px; }
     .row { display:flex; gap:12px; flex-wrap:wrap; }
     label { font-size: 12px; color:#aab6c6; display:block; margin-bottom:6px; }
     input, select { width:100%; padding:10px 12px; border-radius:12px; border:1px solid #263244; background:#0e1520; color:#e8eef6; }
     .col { flex: 1 1 160px; }
+
     .big { font-size: 42px; font-weight: 800; letter-spacing: .5px; }
     .sub { color:#aab6c6; margin-top:6px; }
     .center { text-align:center; }
+
     .btns { display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px; }
     button { padding:14px 12px; border-radius:14px; border:1px solid #2a3950; background:#162234; color:#e8eef6; font-weight:700; font-size:16px; }
     button.primary { background:#2a63ff; border-color:#2a63ff; }
     button.danger { background:#ff3b3b; border-color:#ff3b3b; color:#fff; }
     button:disabled { opacity:.45; }
+
     .players { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
     .pill { padding:6px 10px; border-radius:999px; border:1px solid #2a3950; color:#cfe0ff; font-size:12px; }
     .pill.active { background:#2a63ff; border-color:#2a63ff; color:#fff; }
- #next{
-  grid-column: 1 / -1;   /* 2列レイアウトを横断して1列ぶち抜き */
-  min-height: 72px;      /* 高さを大きく */
-  font-size: 22px;       /* 文字を大きく */
-  border-radius: 18px;   /* 角丸も少し大きく */
- }
-  /* 下に次へボタンを固定するための余白（固定ボタンに隠れないように） */
-body { padding-bottom: 120px; }
 
-/* 次へボタン：画面下に固定して巨大化 */
-#next{
-  position: fixed;
-  left: 16px;
-  right: 16px;
-  bottom: 16px;
-  z-index: 999;
+    /* 上の操作ボタン（停止/取り消し/リセット）は控えめ */
+    #pause, #undo, #reset{
+      min-height: 54px;
+      font-size: 16px;
+    }
 
-  min-height: 84px;
-  font-size: 26px;
-  border-radius: 22px;
+    /* 次へ：画面下固定で超巨大（130px） */
+    #next{
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 10px;
+      z-index: 999;
 
-  box-shadow: 0 10px 30px rgba(0,0,0,.35);
-}
+      min-height: 130px;
+      font-size: 32px;
+      border-radius: 26px;
 
-/* 次へ以外のボタンは少し小さめにして“主役”を明確化（任意） */
-.btns button:not(#next){
-  min-height: 52px;
-  font-size: 16px;
-}
-  
+      box-shadow: 0 12px 34px rgba(0,0,0,.45);
+    }
   </style>
 </head>
 <body>
@@ -82,9 +79,17 @@ body { padding-bottom: 120px; }
         <div class="col"><label>プレイヤー5</label><input class="pname" value="P5"></div>
       </div>
 
+      <!-- 設定系ボタン -->
       <div class="btns">
         <button id="apply" class="primary">設定を反映</button>
         <button id="start">開始</button>
+      </div>
+
+      <!-- ここに「赤枠」ボタンをまとめて退避 -->
+      <div class="btns" style="margin-top:12px;">
+        <button id="pause" disabled>一時停止</button>
+        <button id="undo" disabled>取り消し</button>
+        <button id="reset" class="danger">リセット</button>
       </div>
     </div>
 
@@ -96,16 +101,12 @@ body { padding-bottom: 120px; }
         <div id="hint" class="sub">「開始」でスタート</div>
 
         <div id="pills" class="players" style="justify-content:center;"></div>
-
-        <div class="btns" style="margin-top:14px;">
-          <button id="next" class="primary" disabled>次へ（手番終了）</button>
-          <button id="pause" disabled>一時停止</button>
-          <button id="undo" disabled>取り消し</button>
-          <button id="reset" class="danger">リセット</button>
-        </div>
       </div>
     </div>
   </div>
+
+  <!-- 次へは固定配置なので、wrapの外に置いてもOK（押しやすさ優先） -->
+  <button id="next" class="primary" disabled>次へ（手番終了）</button>
 
 <script>
 (() => {
@@ -171,8 +172,10 @@ body { padding-bottom: 120px; }
     whoEl.textContent = players.length ? players[idx] : "-";
     timeEl.textContent = format(remaining);
     renderPills();
+
     nextEl.disabled = !running;
     pauseEl.disabled = !running;
+
     undoEl.disabled = history.length === 0;
     startEl.disabled = running;
   }
@@ -185,7 +188,7 @@ body { padding-bottom: 120px; }
       document.body.style.background = "#2b0b0b";
       beep();
       setTimeout(() => { document.body.style.background = "#0b0f14"; }, 220);
-      // 0になっても自動で次へは送らない（好みで変更可）
+      // 0になっても自動で次へは送らない
       stopTimer();
     }
     render();
@@ -237,45 +240,41 @@ body { padding-bottom: 120px; }
     render();
   }
 
+  // イベント設定
   applyEl.addEventListener("click", applySettings);
   startEl.addEventListener("click", () => startTimer());
   nextEl.addEventListener("click", nextPlayer);
   pauseEl.addEventListener("click", () => { stopTimer(); hintEl.textContent = "一時停止中"; });
   undoEl.addEventListener("click", undo);
+
+  // リセット：二段確認（誤爆防止）
   let resetArmed = false;
-let resetTimer = null;
+  let resetTimer = null;
 
-function armReset() {
-  resetArmed = true;
-  resetEl.textContent = "もう一度押すとリセット";
-  hintEl.textContent = "リセット確認中（5秒以内にもう一度）";
+  function armReset() {
+    resetArmed = true;
+    resetEl.textContent = "もう一度押すとリセット";
+    hintEl.textContent = "リセット確認中（5秒以内にもう一度）";
+    beep();
 
-  clearTimeout(resetTimer);
-  resetTimer = setTimeout(() => {
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(() => {
+      resetArmed = false;
+      resetEl.textContent = "リセット";
+      hintEl.textContent = "キャンセル";
+    }, 5000);
+  }
+
+  resetEl.addEventListener("click", () => {
+    if (!resetArmed) return armReset();
+    applySettings();
+    hintEl.textContent = "リセット完了";
     resetArmed = false;
     resetEl.textContent = "リセット";
-    hintEl.textContent = "キャンセル";
-  }, 5000);
-}
-
-resetEl.addEventListener("click", () => {
-  if (!resetArmed) {
-    armReset();
-    beep();
-    return;
-  }
-  // 確定リセット
-  applySettings();
-  hintEl.textContent = "リセット完了";
-  resetArmed = false;
-  resetEl.textContent = "リセット";
-});
+  });
 
   applySettings();
 })();
 </script>
 </body>
 </html>
-
-
-
