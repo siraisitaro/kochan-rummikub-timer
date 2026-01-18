@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rummikub Turn Timer</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    body { margin: 0; background:#0b0f14; color:#e8eef6; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 16px; }
+    .card { background:#121a24; border:1px solid #1f2a3a; border-radius:16px; padding:16px; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; }
+    label { font-size: 12px; color:#aab6c6; display:block; margin-bottom:6px; }
+    input, select { width:100%; padding:10px 12px; border-radius:12px; border:1px solid #263244; background:#0e1520; color:#e8eef6; }
+    .col { flex: 1 1 160px; }
+    .big { font-size: 42px; font-weight: 800; letter-spacing: .5px; }
+    .sub { color:#aab6c6; margin-top:6px; }
+    .center { text-align:center; }
+    .btns { display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px; }
+    button { padding:14px 12px; border-radius:14px; border:1px solid #2a3950; background:#162234; color:#e8eef6; font-weight:700; font-size:16px; }
+    button.primary { background:#2a63ff; border-color:#2a63ff; }
+    button.danger { background:#ff3b3b; border-color:#ff3b3b; color:#fff; }
+    button:disabled { opacity:.45; }
+    .players { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    .pill { padding:6px 10px; border-radius:999px; border:1px solid #2a3950; color:#cfe0ff; font-size:12px; }
+    .pill.active { background:#2a63ff; border-color:#2a63ff; color:#fff; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1 style="margin:8px 0 14px;">Rummikub Turn Timer ⏱️</h1>
+
+    <div class="card">
+      <div class="row">
+        <div class="col">
+          <label>参加人数（2〜5）</label>
+          <select id="count">
+            <option>2</option><option selected>3</option><option>4</option><option>5</option>
+          </select>
+        </div>
+        <div class="col">
+          <label>制限時間（秒）</label>
+          <input id="limit" type="number" min="5" step="5" value="60" />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px;">
+        <div class="col"><label>プレイヤー1</label><input class="pname" value="P1"></div>
+        <div class="col"><label>プレイヤー2</label><input class="pname" value="P2"></div>
+        <div class="col"><label>プレイヤー3</label><input class="pname" value="P3"></div>
+        <div class="col"><label>プレイヤー4</label><input class="pname" value="P4"></div>
+        <div class="col"><label>プレイヤー5</label><input class="pname" value="P5"></div>
+      </div>
+
+      <div class="btns">
+        <button id="apply" class="primary">設定を反映</button>
+        <button id="start">開始</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <div class="center">
+        <div class="sub">いまの手番</div>
+        <div id="who" class="big">-</div>
+        <div id="time" class="big" style="font-size:54px; margin-top:4px;">0:00</div>
+        <div id="hint" class="sub">「開始」でスタート</div>
+
+        <div id="pills" class="players" style="justify-content:center;"></div>
+
+        <div class="btns" style="margin-top:14px;">
+          <button id="next" class="primary" disabled>次へ（手番終了）</button>
+          <button id="pause" disabled>一時停止</button>
+          <button id="undo" disabled>取り消し</button>
+          <button id="reset" class="danger">リセット</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const el = (id) => document.getElementById(id);
+  const countEl = el("count");
+  const limitEl = el("limit");
+  const applyEl = el("apply");
+  const startEl = el("start");
+  const nextEl = el("next");
+  const pauseEl = el("pause");
+  const undoEl = el("undo");
+  const resetEl = el("reset");
+  const whoEl = el("who");
+  const timeEl = el("time");
+  const hintEl = el("hint");
+  const pillsEl = el("pills");
+
+  const nameInputs = [...document.querySelectorAll(".pname")];
+
+  let players = [];
+  let limitSec = 60;
+
+  let idx = 0;
+  let remaining = 0;
+  let timer = null;
+  let running = false;
+
+  // undo用
+  let history = []; // {idx, remaining}
+
+  function format(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${String(s).padStart(2, "0")}`;
+  }
+
+  function beep() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "square";
+      o.frequency.value = 880;
+      g.gain.value = 0.03;
+      o.connect(g); g.connect(ctx.destination);
+      o.start();
+      setTimeout(() => { o.stop(); ctx.close(); }, 180);
+    } catch (_) {}
+    if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+  }
+
+  function renderPills() {
+    pillsEl.innerHTML = "";
+    players.forEach((p, i) => {
+      const d = document.createElement("div");
+      d.className = "pill" + (i === idx ? " active" : "");
+      d.textContent = p;
+      pillsEl.appendChild(d);
+    });
+  }
+
+  function render() {
+    whoEl.textContent = players.length ? players[idx] : "-";
+    timeEl.textContent = format(remaining);
+    renderPills();
+    nextEl.disabled = !running;
+    pauseEl.disabled = !running;
+    undoEl.disabled = history.length === 0;
+    startEl.disabled = running;
+  }
+
+  function tick() {
+    if (!running) return;
+    remaining = Math.max(0, remaining - 1);
+    if (remaining === 0) {
+      hintEl.textContent = "時間切れ！";
+      document.body.style.background = "#2b0b0b";
+      beep();
+      setTimeout(() => { document.body.style.background = "#0b0f14"; }, 220);
+      // 0になっても自動で次へは送らない（好みで変更可）
+      stopTimer();
+    }
+    render();
+  }
+
+  function startTimer() {
+    if (!players.length) return;
+    if (running) return;
+    running = true;
+    hintEl.textContent = "進行中…";
+    timer = setInterval(tick, 1000);
+    render();
+  }
+
+  function stopTimer() {
+    running = false;
+    if (timer) clearInterval(timer);
+    timer = null;
+    render();
+  }
+
+  function applySettings() {
+    const c = Number(countEl.value);
+    limitSec = Math.max(5, Number(limitEl.value || 60));
+    players = nameInputs.slice(0, c).map((x, i) => (x.value || `P${i+1}`).trim());
+    idx = 0;
+    remaining = limitSec;
+    history = [];
+    stopTimer();
+    hintEl.textContent = "設定反映OK。開始してね";
+    render();
+  }
+
+  function nextPlayer() {
+    if (!running) return;
+    history.push({ idx, remaining });
+    idx = (idx + 1) % players.length;
+    remaining = limitSec;
+    beep();
+    render();
+  }
+
+  function undo() {
+    const last = history.pop();
+    if (!last) return;
+    idx = last.idx;
+    remaining = last.remaining;
+    hintEl.textContent = "取り消し完了";
+    render();
+  }
+
+  applyEl.addEventListener("click", applySettings);
+  startEl.addEventListener("click", () => startTimer());
+  nextEl.addEventListener("click", nextPlayer);
+  pauseEl.addEventListener("click", () => { stopTimer(); hintEl.textContent = "一時停止中"; });
+  undoEl.addEventListener("click", undo);
+  resetEl.addEventListener("click", () => { applySettings(); hintEl.textContent = "リセット"; });
+
+  applySettings();
+})();
+</script>
+</body>
+</html>
