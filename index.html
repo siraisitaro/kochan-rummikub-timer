@@ -7,8 +7,8 @@
   <style>
     :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
 
-    /* 固定の「次へ」ボタンに隠れないように下に余白を確保 */
-    body { margin: 0; background:#0b0f14; color:#e8eef6; padding-bottom: 190px; }
+    /* 固定の「次へ」ボタンに隠れないように下に余白 */
+    body { margin: 0; background:#0b0f14; color:#e8eef6; padding-bottom: 240px; }
 
     .wrap { max-width: 720px; margin: 0 auto; padding: 16px; }
     .card { background:#121a24; border:1px solid #1f2a3a; border-radius:16px; padding:16px; }
@@ -31,13 +31,7 @@
     .pill { padding:6px 10px; border-radius:999px; border:1px solid #2a3950; color:#cfe0ff; font-size:12px; }
     .pill.active { background:#2a63ff; border-color:#2a63ff; color:#fff; }
 
-    /* 上の操作ボタン（停止/取り消し/リセット）は控えめ */
-    #pause, #undo, #reset{
-      min-height: 54px;
-      font-size: 16px;
-    }
-
-    /* 次へ：画面下固定で超巨大（130px） */
+    /* 次へ：さらに巨大化（170px） */
     #next{
       position: fixed;
       left: 12px;
@@ -45,11 +39,48 @@
       bottom: 10px;
       z-index: 999;
 
-      min-height: 130px;
-      font-size: 32px;
-      border-radius: 26px;
+      min-height: 170px;
+      font-size: 36px;
+      border-radius: 28px;
 
       box-shadow: 0 12px 34px rgba(0,0,0,.45);
+    }
+
+    /* オプション周り */
+    .options-wrap { position: relative; }
+
+    #optionsBtn{
+      grid-column: 1 / -1; /* オプションボタンは横幅いっぱい */
+      min-height: 56px;
+      font-size: 16px;
+      opacity: .92;
+    }
+
+    /* 開いたときに出るパネル */
+    #optionsPanel{
+      display: none;
+      margin-top: 10px;
+      padding: 12px;
+      border: 1px solid #223047;
+      border-radius: 14px;
+      background: #0e1520;
+    }
+
+    #optionsPanel.open{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* パネル内ボタンは控えめサイズ */
+    #pause, #undo, #reset{
+      min-height: 54px;
+      font-size: 16px;
+    }
+
+    /* リセットは危険なので横幅いっぱいにして「ここ押してる」感を出す */
+    #reset{
+      grid-column: 1 / -1;
     }
   </style>
 </head>
@@ -85,8 +116,12 @@
         <button id="start">開始</button>
       </div>
 
-      <!-- ここに「赤枠」ボタンをまとめて退避 -->
-      <div class="btns" style="margin-top:12px;">
+      <!-- オプション格納 -->
+      <div class="btns options-wrap" style="margin-top:12px;">
+        <button id="optionsBtn">オプション</button>
+      </div>
+
+      <div id="optionsPanel" aria-hidden="true">
         <button id="pause" disabled>一時停止</button>
         <button id="undo" disabled>取り消し</button>
         <button id="reset" class="danger">リセット</button>
@@ -105,20 +140,25 @@
     </div>
   </div>
 
-  <!-- 次へは固定配置なので、wrapの外に置いてもOK（押しやすさ優先） -->
   <button id="next" class="primary" disabled>次へ（手番終了）</button>
 
 <script>
 (() => {
   const el = (id) => document.getElementById(id);
+
   const countEl = el("count");
   const limitEl = el("limit");
   const applyEl = el("apply");
   const startEl = el("start");
   const nextEl = el("next");
+
+  const optionsBtn = el("optionsBtn");
+  const optionsPanel = el("optionsPanel");
+
   const pauseEl = el("pause");
   const undoEl = el("undo");
   const resetEl = el("reset");
+
   const whoEl = el("who");
   const timeEl = el("time");
   const hintEl = el("hint");
@@ -175,7 +215,6 @@
 
     nextEl.disabled = !running;
     pauseEl.disabled = !running;
-
     undoEl.disabled = history.length === 0;
     startEl.disabled = running;
   }
@@ -188,7 +227,6 @@
       document.body.style.background = "#2b0b0b";
       beep();
       setTimeout(() => { document.body.style.background = "#0b0f14"; }, 220);
-      // 0になっても自動で次へは送らない
       stopTimer();
     }
     render();
@@ -240,12 +278,27 @@
     render();
   }
 
-  // イベント設定
-  applyEl.addEventListener("click", applySettings);
-  startEl.addEventListener("click", () => startTimer());
-  nextEl.addEventListener("click", nextPlayer);
-  pauseEl.addEventListener("click", () => { stopTimer(); hintEl.textContent = "一時停止中"; });
-  undoEl.addEventListener("click", undo);
+  // オプション開閉
+  function setOptions(open) {
+    const isOpen = open ?? !optionsPanel.classList.contains("open");
+    optionsPanel.classList.toggle("open", isOpen);
+    optionsPanel.setAttribute("aria-hidden", String(!isOpen));
+    optionsBtn.setAttribute("aria-expanded", String(isOpen));
+  }
+
+  optionsBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    setOptions();
+    beep();
+  });
+
+  // パネル外タップで閉じる
+  document.addEventListener("click", (e) => {
+    if (!optionsPanel.classList.contains("open")) return;
+    const t = e.target;
+    if (t === optionsBtn || optionsPanel.contains(t)) return;
+    setOptions(false);
+  });
 
   // リセット：二段確認（誤爆防止）
   let resetArmed = false;
@@ -271,7 +324,15 @@
     hintEl.textContent = "リセット完了";
     resetArmed = false;
     resetEl.textContent = "リセット";
+    setOptions(false);
   });
+
+  // イベント
+  applyEl.addEventListener("click", () => applySettings());
+  startEl.addEventListener("click", () => startTimer());
+  nextEl.addEventListener("click", () => nextPlayer());
+  pauseEl.addEventListener("click", () => { stopTimer(); hintEl.textContent = "一時停止中"; setOptions(false); });
+  undoEl.addEventListener("click", () => { undo(); setOptions(false); });
 
   applySettings();
 })();
