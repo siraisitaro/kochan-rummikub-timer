@@ -6,13 +6,11 @@
 <title>Rummikub Turn Timer</title>
 
 <style>
-:root {
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-}
 body {
   margin: 0;
   background: #0b0f14;
   color: #e8eef6;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
 .hidden { display: none; }
@@ -23,7 +21,7 @@ body {
   padding: 16px;
 }
 
-/* ===== 設定モード ===== */
+/* ===== 設定 ===== */
 .card {
   background:#121a24;
   border:1px solid #1f2a3a;
@@ -35,127 +33,96 @@ body {
   gap:12px;
   flex-wrap:wrap;
 }
-label {
-  font-size:12px;
-  color:#aab6c6;
-  margin-bottom:6px;
-  display:block;
-}
 input, select {
   width:100%;
-  padding:10px 12px;
+  padding:12px;
   border-radius:12px;
   border:1px solid #263244;
   background:#0e1520;
   color:#e8eef6;
 }
-.col { flex:1 1 160px; }
 button {
   padding:14px;
   border-radius:14px;
-  border:1px solid #2a3950;
-  background:#162234;
-  color:#e8eef6;
+  border:none;
   font-size:16px;
   font-weight:700;
 }
-button.primary {
-  background:#2a63ff;
-  border-color:#2a63ff;
-}
-button.danger {
-  background:#ff3b3b;
-  border-color:#ff3b3b;
-}
+.primary { background:#2a63ff; color:#fff; }
+.danger { background:#ff3b3b; color:#fff; }
 
-/* ===== プレイモード ===== */
+/* ===== プレイ ===== */
 #play {
   position: fixed;
   inset: 0;
+  background:#0b0f14;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
+
+  /* 重要：初期状態では操作不可 */
+  pointer-events: none;
+}
+
+#play.active {
+  pointer-events: auto;
 }
 
 #centerTap {
   width: 100%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  touch-action: manipulation;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
 }
 
 #time {
-  font-size: 110px;
+  font-size: 120px;
   font-weight: 900;
-  line-height: 1;
 }
 
 #who {
   margin-top: 12px;
   font-size: 32px;
-  color: #aab6c6;
+  color:#aab6c6;
 }
 
-#hint {
-  margin-top: 18px;
-  font-size: 14px;
-  color: #8fa2bd;
-}
-
-#hold {
-  margin-top: 16px;
-  font-size: 13px;
-  opacity: .7;
-}
-
-/* 10秒以下の煽り */
 .warning {
-  color: #ff5a5a;
-  animation: pulse .8s infinite;
+  color:#ff5a5a;
+  animation:pulse .8s infinite;
 }
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+  0%{transform:scale(1)}
+  50%{transform:scale(1.05)}
+  100%{transform:scale(1)}
 }
 </style>
 </head>
 
 <body>
 
-<!-- ===== 設定モード ===== -->
+<!-- 設定画面 -->
 <div id="settings" class="wrap">
   <h2>設定</h2>
-
   <div class="card">
     <div class="row">
-      <div class="col">
-        <label>参加人数</label>
-        <select id="count">
-          <option>2</option>
-          <option selected>3</option>
-          <option>4</option>
-          <option>5</option>
-        </select>
-      </div>
-      <div class="col">
-        <label>制限時間（秒）</label>
-        <input id="limit" type="number" value="60" min="5" step="5">
-      </div>
+      <select id="count">
+        <option>2</option>
+        <option selected>3</option>
+        <option>4</option>
+        <option>5</option>
+      </select>
+      <input id="limit" type="number" value="60">
     </div>
-
     <div class="row" style="margin-top:12px;">
-      <div class="col"><input class="pname" value="P1"></div>
-      <div class="col"><input class="pname" value="P2"></div>
-      <div class="col"><input class="pname" value="P3"></div>
-      <div class="col"><input class="pname" value="P4"></div>
-      <div class="col"><input class="pname" value="P5"></div>
+      <input class="pname" value="P1">
+      <input class="pname" value="P2">
+      <input class="pname" value="P3">
+      <input class="pname" value="P4">
+      <input class="pname" value="P5">
     </div>
-
     <div class="row" style="margin-top:12px;">
       <button id="start" class="primary">開始</button>
       <button id="reset" class="danger">リセット</button>
@@ -163,13 +130,12 @@ button.danger {
   </div>
 </div>
 
-<!-- ===== プレイモード ===== -->
-<div id="play" class="hidden">
+<!-- プレイ画面 -->
+<div id="play">
   <div id="centerTap">
     <div id="time"></div>
     <div id="who"></div>
-    <div id="hint">タップ：次へ</div>
-    <div id="hold">5秒長押しで設定へ</div>
+    <div style="opacity:.6;margin-top:10px;">タップ：次へ / 5秒長押し：設定</div>
   </div>
 </div>
 
@@ -179,120 +145,80 @@ button.danger {
 
   const settings = $("settings");
   const play = $("play");
-
   const timeEl = $("time");
   const whoEl = $("who");
-
-  const countEl = $("count");
-  const limitEl = $("limit");
-  const names = [...document.querySelectorAll(".pname")];
 
   let players = [];
   let limit = 60;
   let idx = 0;
   let remain = 0;
   let timer = null;
-  let mode = "settings";
 
-  /* ===== モード切替 ===== */
-  function showSettings() {
-    mode = "settings";
+  function showSettings(){
     settings.classList.remove("hidden");
+    play.classList.remove("active");
     play.classList.add("hidden");
-    stopTimer();
-
-    // 念のためプレイ表示を完全クリア
-    timeEl.textContent = "";
-    whoEl.textContent = "";
-    timeEl.classList.remove("warning");
+    clearInterval(timer);
   }
 
-  function showPlay() {
-    mode = "play";
+  function showPlay(){
     settings.classList.add("hidden");
     play.classList.remove("hidden");
+    play.classList.add("active");
     startTurn();
   }
 
-  /* ===== タイマー制御 ===== */
-  function startTurn() {
+  function startTurn(){
     remain = limit;
     update();
-    stopTimer();
-    timer = setInterval(tick, 1000);
+    clearInterval(timer);
+    timer = setInterval(tick,1000);
   }
 
-  function stopTimer() {
-    if (timer) clearInterval(timer);
-    timer = null;
-  }
-
-  function tick() {
-    if (mode !== "play") return;
-
+  function tick(){
     remain--;
-    if (remain <= 10) timeEl.classList.add("warning");
-    if (remain <= 0) {
+    if(remain <= 10) timeEl.classList.add("warning");
+    if(remain <= 0){
       remain = 0;
-      stopTimer();
+      clearInterval(timer);
     }
     update();
   }
 
-  function update() {
-    if (mode !== "play") return;
-
+  function update(){
     timeEl.textContent =
-      Math.floor(remain / 60) + ":" +
-      String(remain % 60).padStart(2, "0");
-
+      Math.floor(remain/60)+":"+String(remain%60).padStart(2,"0");
     whoEl.textContent = players[idx] + " の番";
   }
 
-  function nextTurn() {
-    if (mode !== "play") return;
-
-    idx = (idx + 1) % players.length;
+  function next(){
+    idx = (idx+1)%players.length;
+    timeEl.classList.remove("warning");
     startTurn();
   }
 
-  /* ===== 中央タップ & 長押し ===== */
-  let holdTimer = null;
-  const HOLD_TIME = 5000;
-
-  $("centerTap").addEventListener("pointerdown", () => {
-    if (mode !== "play") return;
-    holdTimer = setTimeout(showSettings, HOLD_TIME);
+  let holdTimer;
+  $("centerTap").addEventListener("pointerdown",()=>{
+    holdTimer = setTimeout(showSettings,5000);
   });
-
-  ["pointerup","pointerleave","pointercancel"].forEach(ev =>
-    $("centerTap").addEventListener(ev, () => clearTimeout(holdTimer))
-  );
-
-  $("centerTap").addEventListener("click", () => {
-    if (mode === "play") nextTurn();
+  ["pointerup","pointerleave"].forEach(e=>{
+    $("centerTap").addEventListener(e,()=>clearTimeout(holdTimer));
   });
+  $("centerTap").addEventListener("click",next);
 
-  /* ===== 設定操作 ===== */
-  $("start").onclick = () => {
+  $("start").onclick = ()=>{
+    const names=[...document.querySelectorAll(".pname")];
     players = names
-      .slice(0, Number(countEl.value))
-      .map((n, i) => n.value || "P" + (i + 1));
-
-    limit = Number(limitEl.value) || 60;
+      .slice(0,Number($("count").value))
+      .map((n,i)=>n.value||"P"+(i+1));
+    limit = Number($("limit").value)||60;
     idx = 0;
-
     showPlay();
   };
 
-  $("reset").onclick = () => {
-    idx = 0;
-    showSettings();
-  };
+  $("reset").onclick = showSettings;
 
-  /* ===== 起動時は必ず設定モード ===== */
   showSettings();
-
 })();
 </script>
 
