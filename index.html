@@ -7,8 +7,8 @@
   <style>
     :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
 
-    /* 固定の「次へ」ボタンに隠れないように下に余白 */
-    body { margin: 0; background:#0b0f14; color:#e8eef6; padding-bottom: 240px; }
+    /* 固定の次へボタンに隠れないよう下に余白 */
+    body { margin: 0; background:#0b0f14; color:#e8eef6; padding-bottom: 280px; }
 
     .wrap { max-width: 720px; margin: 0 auto; padding: 16px; }
     .card { background:#121a24; border:1px solid #1f2a3a; border-radius:16px; padding:16px; }
@@ -27,36 +27,55 @@
     button.danger { background:#ff3b3b; border-color:#ff3b3b; color:#fff; }
     button:disabled { opacity:.45; }
 
-    .players { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    .players { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; justify-content:center; }
     .pill { padding:6px 10px; border-radius:999px; border:1px solid #2a3950; color:#cfe0ff; font-size:12px; }
     .pill.active { background:#2a63ff; border-color:#2a63ff; color:#fff; }
 
-    /* 次へ：さらに巨大化（170px） */
+    /* 残り時間表示：卓共有サイズに */
+    #time {
+      font-size: 96px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      margin-top: 6px;
+      line-height: 1.05;
+    }
+
+    /* 10秒以下演出 */
+    .warning {
+      color: #ff5a5a;
+      animation: pulse 0.8s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    /* 次へ：さらに巨大化（テーブル全員が押しやすいように） */
     #next{
       position: fixed;
-      left: 12px;
-      right: 12px;
+      left: 10px;
+      right: 10px;
       bottom: 10px;
       z-index: 999;
 
-      min-height: 250px;
-      font-size: 36px;
-      border-radius: 28px;
+      min-height: 200px;  /* ←さらに大きく */
+      font-size: 46px;
+      border-radius: 30px;
 
-      box-shadow: 0 12px 34px rgba(0,0,0,.45);
+      box-shadow: 0 14px 40px rgba(0,0,0,.55);
+      touch-action: manipulation;
     }
 
-    /* オプション周り */
+    /* オプション */
     .options-wrap { position: relative; }
-
     #optionsBtn{
-      grid-column: 1 / -1; /* オプションボタンは横幅いっぱい */
+      grid-column: 1 / -1;
       min-height: 56px;
       font-size: 16px;
       opacity: .92;
     }
 
-    /* 開いたときに出るパネル */
     #optionsPanel{
       display: none;
       margin-top: 10px;
@@ -65,22 +84,22 @@
       border-radius: 14px;
       background: #0e1520;
     }
-
     #optionsPanel.open{
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
-
-    /* パネル内ボタンは控えめサイズ */
     #pause, #undo, #reset{
       min-height: 54px;
       font-size: 16px;
     }
-
-    /* リセットは危険なので横幅いっぱいにして「ここ押してる」感を出す */
     #reset{
       grid-column: 1 / -1;
+    }
+
+    /* タイムアップの一瞬フラッシュ */
+    .timeoutFlash {
+      background: #2b0b0b !important;
     }
   </style>
 </head>
@@ -110,15 +129,13 @@
         <div class="col"><label>プレイヤー5</label><input class="pname" value="P5"></div>
       </div>
 
-      <!-- 設定系ボタン -->
       <div class="btns">
         <button id="apply" class="primary">設定を反映</button>
         <button id="start">開始</button>
       </div>
 
-      <!-- オプション格納 -->
       <div class="btns options-wrap" style="margin-top:12px;">
-        <button id="optionsBtn">オプション</button>
+        <button id="optionsBtn">オプション（停止/取り消し/リセット）</button>
       </div>
 
       <div id="optionsPanel" aria-hidden="true">
@@ -132,15 +149,14 @@
       <div class="center">
         <div class="sub">いまの手番</div>
         <div id="who" class="big">-</div>
-        <div id="time" class="big" style="font-size:54px; margin-top:4px;">0:00</div>
+        <div id="time">0:00</div>
         <div id="hint" class="sub">「開始」でスタート</div>
-
-        <div id="pills" class="players" style="justify-content:center;"></div>
+        <div id="pills" class="players"></div>
       </div>
     </div>
   </div>
 
-  <button id="next" class="primary" disabled>次へ（手番終了）</button>
+  <button id="next" class="primary" disabled>次へ</button>
 
 <script>
 (() => {
@@ -174,6 +190,9 @@
   let timer = null;
   let running = false;
 
+  // タイムアップ後も「次へ」で続行できるようにフラグ化
+  let timedOut = false;
+
   // undo用
   let history = []; // {idx, remaining}
 
@@ -183,19 +202,31 @@
     return `${m}:${String(s).padStart(2, "0")}`;
   }
 
-  function beep() {
+  // アラーム（短）/（長）
+  function beep(ms = 180, freq = 880) {
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const o = ctx.createOscillator();
       const g = ctx.createGain();
       o.type = "square";
-      o.frequency.value = 880;
+      o.frequency.value = freq;
       g.gain.value = 0.03;
       o.connect(g); g.connect(ctx.destination);
       o.start();
-      setTimeout(() => { o.stop(); ctx.close(); }, 180);
+      setTimeout(() => { o.stop(); ctx.close(); }, ms);
     } catch (_) {}
     if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+  }
+
+  // タイムアップ用に少し長めに鳴らす
+  function alarmTimeout() {
+    beep(220, 880);
+    setTimeout(() => beep(220, 740), 260);
+  }
+
+  function flashTimeout() {
+    document.body.classList.add("timeoutFlash");
+    setTimeout(() => document.body.classList.remove("timeoutFlash"), 220);
   }
 
   function renderPills() {
@@ -208,37 +239,29 @@
     });
   }
 
+  function setWarning(on) {
+    timeEl.classList.toggle("warning", on);
+  }
+
   function render() {
     whoEl.textContent = players.length ? players[idx] : "-";
     timeEl.textContent = format(remaining);
     renderPills();
 
-    nextEl.disabled = !running;
+    // 次へは「進行中」でも「時間切れ」でも押せる（続行のため）
+    nextEl.disabled = !(running || timedOut);
+
     pauseEl.disabled = !running;
     undoEl.disabled = history.length === 0;
     startEl.disabled = running;
+
+    // 10秒以下は煽る（カウントダウン演出）
+    setWarning(remaining <= 10 && remaining > 0);
   }
 
-  function tick() {
-    if (!running) return;
-    remaining = Math.max(0, remaining - 1);
-    if (remaining === 0) {
-      hintEl.textContent = "時間切れ！";
-      document.body.style.background = "#2b0b0b";
-      beep();
-      setTimeout(() => { document.body.style.background = "#0b0f14"; }, 220);
-      stopTimer();
-    }
-    render();
-  }
-
-  function startTimer() {
-    if (!players.length) return;
-    if (running) return;
-    running = true;
-    hintEl.textContent = "進行中…";
+  function startInterval() {
+    if (timer) clearInterval(timer);
     timer = setInterval(tick, 1000);
-    render();
   }
 
   function stopTimer() {
@@ -248,39 +271,99 @@
     render();
   }
 
+  function tick() {
+    if (!running) return;
+
+    // 10秒カウントダウンの「煽り音」（短いビープ）
+    if (remaining <= 10 && remaining > 0) {
+      beep(90, 960);
+    }
+
+    remaining = Math.max(0, remaining - 1);
+
+    if (remaining === 0) {
+      // タイムアップ：音を鳴らす + フラッシュ + 「次へで続行」可能に
+      timedOut = true;
+      running = false;
+      if (timer) clearInterval(timer);
+      timer = null;
+
+      hintEl.textContent = "時間切れ！次へで続行";
+      alarmTimeout();
+      flashTimeout();
+    }
+
+    render();
+  }
+
+  function startTimer() {
+    if (!players.length) return;
+
+    // もしタイムアップ後に開始を押した場合は、その場で再開する
+    if (remaining <= 0) remaining = limitSec;
+
+    timedOut = false;
+    running = true;
+    hintEl.textContent = "進行中…";
+    startInterval();
+    render();
+  }
+
   function applySettings() {
     const c = Number(countEl.value);
     limitSec = Math.max(5, Number(limitEl.value || 60));
     players = nameInputs.slice(0, c).map((x, i) => (x.value || `P${i+1}`).trim());
+
     idx = 0;
     remaining = limitSec;
     history = [];
+    timedOut = false;
+
     stopTimer();
     hintEl.textContent = "設定反映OK。開始してね";
     render();
   }
 
   function nextPlayer() {
-    if (!running) return;
+    // 「進行中」でも「時間切れ後」でも次へは成立
     history.push({ idx, remaining });
+
     idx = (idx + 1) % players.length;
     remaining = limitSec;
-    beep();
+
+    timedOut = false;
+    running = true;
+    hintEl.textContent = "進行中…";
+
+    // 次の人は即スタート
+    startInterval();
+
+    beep(120, 820);
     render();
   }
 
   function undo() {
     const last = history.pop();
     if (!last) return;
+
     idx = last.idx;
     remaining = last.remaining;
+
+    // undo後は「その状態で続行」できるようにする
+    timedOut = false;
+    if (!running) {
+      running = true;
+      hintEl.textContent = "進行中…";
+      startInterval();
+    }
+
     hintEl.textContent = "取り消し完了";
     render();
   }
 
   // オプション開閉
   function setOptions(open) {
-    const isOpen = open ?? !optionsPanel.classList.contains("open");
+    const isOpen = (open ?? !optionsPanel.classList.contains("open"));
     optionsPanel.classList.toggle("open", isOpen);
     optionsPanel.setAttribute("aria-hidden", String(!isOpen));
     optionsBtn.setAttribute("aria-expanded", String(isOpen));
@@ -289,10 +372,9 @@
   optionsBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     setOptions();
-    beep();
+    beep(90, 700);
   });
 
-  // パネル外タップで閉じる
   document.addEventListener("click", (e) => {
     if (!optionsPanel.classList.contains("open")) return;
     const t = e.target;
@@ -308,7 +390,7 @@
     resetArmed = true;
     resetEl.textContent = "もう一度押すとリセット";
     hintEl.textContent = "リセット確認中（5秒以内にもう一度）";
-    beep();
+    beep(140, 520);
 
     clearTimeout(resetTimer);
     resetTimer = setTimeout(() => {
@@ -320,6 +402,7 @@
 
   resetEl.addEventListener("click", () => {
     if (!resetArmed) return armReset();
+
     applySettings();
     hintEl.textContent = "リセット完了";
     resetArmed = false;
@@ -331,7 +414,7 @@
   applyEl.addEventListener("click", () => applySettings());
   startEl.addEventListener("click", () => startTimer());
   nextEl.addEventListener("click", () => nextPlayer());
-  pauseEl.addEventListener("click", () => { stopTimer(); hintEl.textContent = "一時停止中"; setOptions(false); });
+  pauseEl.addEventListener("click", () => { stopTimer(); timedOut = false; hintEl.textContent = "一時停止中"; setOptions(false); render(); });
   undoEl.addEventListener("click", () => { undo(); setOptions(false); });
 
   applySettings();
@@ -339,4 +422,3 @@
 </script>
 </body>
 </html>
-
