@@ -1,424 +1,286 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Rummikub Turn Timer Developed by KoChan</title>
-  <style>
-    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rummikub Turn Timer</title>
 
-    /* 固定の次へボタンに隠れないよう下に余白 */
-    body { margin: 0; background:#0b0f14; color:#e8eef6; padding-bottom: 280px; }
+<style>
+:root {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+body {
+  margin: 0;
+  background: #0b0f14;
+  color: #e8eef6;
+}
 
-    .wrap { max-width: 720px; margin: 0 auto; padding: 16px; }
-    .card { background:#121a24; border:1px solid #1f2a3a; border-radius:16px; padding:16px; }
-    .row { display:flex; gap:12px; flex-wrap:wrap; }
-    label { font-size: 12px; color:#aab6c6; display:block; margin-bottom:6px; }
-    input, select { width:100%; padding:10px 12px; border-radius:12px; border:1px solid #263244; background:#0e1520; color:#e8eef6; }
-    .col { flex: 1 1 160px; }
+.hidden { display: none; }
 
-    .big { font-size: 42px; font-weight: 800; letter-spacing: .5px; }
-    .sub { color:#aab6c6; margin-top:6px; }
-    .center { text-align:center; }
+.wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px;
+}
 
-    .btns { display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px; }
-    button { padding:14px 12px; border-radius:14px; border:1px solid #2a3950; background:#162234; color:#e8eef6; font-weight:700; font-size:16px; }
-    button.primary { background:#2a63ff; border-color:#2a63ff; }
-    button.danger { background:#ff3b3b; border-color:#ff3b3b; color:#fff; }
-    button:disabled { opacity:.45; }
+/* =====================
+   設定モード
+===================== */
+.card {
+  background:#121a24;
+  border:1px solid #1f2a3a;
+  border-radius:16px;
+  padding:16px;
+}
+.row {
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+}
+label {
+  font-size:12px;
+  color:#aab6c6;
+  margin-bottom:6px;
+  display:block;
+}
+input, select {
+  width:100%;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid #263244;
+  background:#0e1520;
+  color:#e8eef6;
+}
+.col { flex:1 1 160px; }
+button {
+  padding:14px;
+  border-radius:14px;
+  border:1px solid #2a3950;
+  background:#162234;
+  color:#e8eef6;
+  font-size:16px;
+  font-weight:700;
+}
+button.primary {
+  background:#2a63ff;
+  border-color:#2a63ff;
+}
+button.danger {
+  background:#ff3b3b;
+  border-color:#ff3b3b;
+}
 
-    .players { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; justify-content:center; }
-    .pill { padding:6px 10px; border-radius:999px; border:1px solid #2a3950; color:#cfe0ff; font-size:12px; }
-    .pill.active { background:#2a63ff; border-color:#2a63ff; color:#fff; }
+/* =====================
+   プレイモード
+===================== */
+#play {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
 
-    /* 残り時間表示：卓共有サイズに */
-    #time {
-      font-size: 96px;
-      font-weight: 900;
-      letter-spacing: 1px;
-      margin-top: 6px;
-      line-height: 1.05;
-    }
+#centerTap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
 
-    /* 10秒以下演出 */
-    .warning {
-      color: #ff5a5a;
-      animation: pulse 0.8s infinite;
-    }
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
+#time {
+  font-size: 110px;
+  font-weight: 900;
+  line-height: 1;
+}
 
-    /* 次へ：さらに巨大化（テーブル全員が押しやすいように） */
-    #next{
-      position: fixed;
-      left: 10px;
-      right: 10px;
-      bottom: 10px;
-      z-index: 999;
+#who {
+  margin-top: 12px;
+  font-size: 32px;
+  color: #aab6c6;
+}
 
-      min-height: 200px;  /* ←さらに大きく */
-      font-size: 46px;
-      border-radius: 30px;
+#hint {
+  margin-top: 18px;
+  font-size: 14px;
+  color: #8fa2bd;
+}
 
-      box-shadow: 0 14px 40px rgba(0,0,0,.55);
-      touch-action: manipulation;
-    }
+/* 10秒以下の煽り */
+.warning {
+  color: #ff5a5a;
+  animation: pulse .8s infinite;
+}
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
 
-    /* オプション */
-    .options-wrap { position: relative; }
-    #optionsBtn{
-      grid-column: 1 / -1;
-      min-height: 56px;
-      font-size: 16px;
-      opacity: .92;
-    }
-
-    #optionsPanel{
-      display: none;
-      margin-top: 10px;
-      padding: 12px;
-      border: 1px solid #223047;
-      border-radius: 14px;
-      background: #0e1520;
-    }
-    #optionsPanel.open{
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    #pause, #undo, #reset{
-      min-height: 54px;
-      font-size: 16px;
-    }
-    #reset{
-      grid-column: 1 / -1;
-    }
-
-    /* タイムアップの一瞬フラッシュ */
-    .timeoutFlash {
-      background: #2b0b0b !important;
-    }
-  </style>
+/* 長押し表示 */
+#hold {
+  margin-top: 20px;
+  font-size: 13px;
+  opacity: .7;
+}
+</style>
 </head>
+
 <body>
-  <div class="wrap">
-    <h1 style="margin:8px 0 14px;">Rummikub Turn Timer ⏱️</h1>
 
-    <div class="card">
-      <div class="row">
-        <div class="col">
-          <label>参加人数（2〜5）</label>
-          <select id="count">
-            <option>2</option><option selected>3</option><option>4</option><option>5</option>
-          </select>
-        </div>
-        <div class="col">
-          <label>制限時間（秒）</label>
-          <input id="limit" type="number" min="5" step="5" value="60" />
-        </div>
+<!-- =====================
+     設定モード
+===================== -->
+<div id="settings" class="wrap">
+  <h2>設定</h2>
+
+  <div class="card">
+    <div class="row">
+      <div class="col">
+        <label>参加人数</label>
+        <select id="count">
+          <option>2</option>
+          <option selected>3</option>
+          <option>4</option>
+          <option>5</option>
+        </select>
       </div>
-
-      <div class="row" style="margin-top:12px;">
-        <div class="col"><label>プレイヤー1</label><input class="pname" value="P1"></div>
-        <div class="col"><label>プレイヤー2</label><input class="pname" value="P2"></div>
-        <div class="col"><label>プレイヤー3</label><input class="pname" value="P3"></div>
-        <div class="col"><label>プレイヤー4</label><input class="pname" value="P4"></div>
-        <div class="col"><label>プレイヤー5</label><input class="pname" value="P5"></div>
-      </div>
-
-      <div class="btns">
-        <button id="apply" class="primary">設定を反映</button>
-        <button id="start">開始</button>
-      </div>
-
-      <div class="btns options-wrap" style="margin-top:12px;">
-        <button id="optionsBtn">オプション（停止/取り消し/リセット）</button>
-      </div>
-
-      <div id="optionsPanel" aria-hidden="true">
-        <button id="pause" disabled>一時停止</button>
-        <button id="undo" disabled>取り消し</button>
-        <button id="reset" class="danger">リセット</button>
+      <div class="col">
+        <label>制限時間（秒）</label>
+        <input id="limit" type="number" value="60" min="5" step="5">
       </div>
     </div>
 
-    <div class="card" style="margin-top:14px;">
-      <div class="center">
-        <div class="sub">いまの手番</div>
-        <div id="who" class="big">-</div>
-        <div id="time">0:00</div>
-        <div id="hint" class="sub">「開始」でスタート</div>
-        <div id="pills" class="players"></div>
-      </div>
+    <div class="row" style="margin-top:12px;">
+      <div class="col"><input class="pname" value="P1"></div>
+      <div class="col"><input class="pname" value="P2"></div>
+      <div class="col"><input class="pname" value="P3"></div>
+      <div class="col"><input class="pname" value="P4"></div>
+      <div class="col"><input class="pname" value="P5"></div>
+    </div>
+
+    <div class="row" style="margin-top:12px;">
+      <button id="start" class="primary">開始</button>
+      <button id="reset" class="danger">リセット</button>
     </div>
   </div>
+</div>
 
-  <button id="next" class="primary" disabled>次へ</button>
+<!-- =====================
+     プレイモード
+===================== -->
+<div id="play" class="hidden">
+  <div id="centerTap">
+    <div id="time">1:00</div>
+    <div id="who">P1の番</div>
+    <div id="hint">タップ：次へ</div>
+    <div id="hold">5秒長押しで設定へ</div>
+  </div>
+</div>
 
 <script>
 (() => {
-  const el = (id) => document.getElementById(id);
+  const $ = id => document.getElementById(id);
 
-  const countEl = el("count");
-  const limitEl = el("limit");
-  const applyEl = el("apply");
-  const startEl = el("start");
-  const nextEl = el("next");
+  const settings = $("settings");
+  const play = $("play");
 
-  const optionsBtn = el("optionsBtn");
-  const optionsPanel = el("optionsPanel");
+  const timeEl = $("time");
+  const whoEl = $("who");
 
-  const pauseEl = el("pause");
-  const undoEl = el("undo");
-  const resetEl = el("reset");
-
-  const whoEl = el("who");
-  const timeEl = el("time");
-  const hintEl = el("hint");
-  const pillsEl = el("pills");
-
-  const nameInputs = [...document.querySelectorAll(".pname")];
+  const countEl = $("count");
+  const limitEl = $("limit");
+  const names = [...document.querySelectorAll(".pname")];
 
   let players = [];
-  let limitSec = 60;
-
+  let limit = 60;
   let idx = 0;
-  let remaining = 0;
+  let remain = 0;
   let timer = null;
-  let running = false;
+  let mode = "settings";
 
-  // タイムアップ後も「次へ」で続行できるようにフラグ化
-  let timedOut = false;
-
-  // undo用
-  let history = []; // {idx, remaining}
-
-  function format(sec) {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${m}:${String(s).padStart(2, "0")}`;
+  /* ===== モード切替 ===== */
+  function showSettings() {
+    mode = "settings";
+    settings.classList.remove("hidden");
+    play.classList.add("hidden");
+    stop();
   }
 
-  // アラーム（短）/（長）
-  function beep(ms = 180, freq = 880) {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = "square";
-      o.frequency.value = freq;
-      g.gain.value = 0.03;
-      o.connect(g); g.connect(ctx.destination);
-      o.start();
-      setTimeout(() => { o.stop(); ctx.close(); }, ms);
-    } catch (_) {}
-    if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+  function showPlay() {
+    mode = "play";
+    settings.classList.add("hidden");
+    play.classList.remove("hidden");
+    startTurn();
   }
 
-  // タイムアップ用に少し長めに鳴らす
-  function alarmTimeout() {
-    beep(220, 880);
-    setTimeout(() => beep(220, 740), 260);
-  }
-
-  function flashTimeout() {
-    document.body.classList.add("timeoutFlash");
-    setTimeout(() => document.body.classList.remove("timeoutFlash"), 220);
-  }
-
-  function renderPills() {
-    pillsEl.innerHTML = "";
-    players.forEach((p, i) => {
-      const d = document.createElement("div");
-      d.className = "pill" + (i === idx ? " active" : "");
-      d.textContent = p;
-      pillsEl.appendChild(d);
-    });
-  }
-
-  function setWarning(on) {
-    timeEl.classList.toggle("warning", on);
-  }
-
-  function render() {
-    whoEl.textContent = players.length ? players[idx] : "-";
-    timeEl.textContent = format(remaining);
-    renderPills();
-
-    // 次へは「進行中」でも「時間切れ」でも押せる（続行のため）
-    nextEl.disabled = !(running || timedOut);
-
-    pauseEl.disabled = !running;
-    undoEl.disabled = history.length === 0;
-    startEl.disabled = running;
-
-    // 10秒以下は煽る（カウントダウン演出）
-    setWarning(remaining <= 10 && remaining > 0);
-  }
-
-  function startInterval() {
-    if (timer) clearInterval(timer);
+  /* ===== タイマー ===== */
+  function startTurn() {
+    remain = limit;
+    update();
+    stop();
     timer = setInterval(tick, 1000);
   }
 
-  function stopTimer() {
-    running = false;
+  function stop() {
     if (timer) clearInterval(timer);
     timer = null;
-    render();
   }
 
   function tick() {
-    if (!running) return;
-
-    // 10秒カウントダウンの「煽り音」（短いビープ）
-    if (remaining <= 10 && remaining > 0) {
-      beep(90, 960);
+    remain--;
+    if (remain <= 10) timeEl.classList.add("warning");
+    if (remain <= 0) {
+      stop();
+      remain = 0;
     }
-
-    remaining = Math.max(0, remaining - 1);
-
-    if (remaining === 0) {
-      // タイムアップ：音を鳴らす + フラッシュ + 「次へで続行」可能に
-      timedOut = true;
-      running = false;
-      if (timer) clearInterval(timer);
-      timer = null;
-
-      hintEl.textContent = "時間切れ！次へで続行";
-      alarmTimeout();
-      flashTimeout();
-    }
-
-    render();
+    update();
   }
 
-  function startTimer() {
-    if (!players.length) return;
-
-    // もしタイムアップ後に開始を押した場合は、その場で再開する
-    if (remaining <= 0) remaining = limitSec;
-
-    timedOut = false;
-    running = true;
-    hintEl.textContent = "進行中…";
-    startInterval();
-    render();
+  function update() {
+    timeEl.textContent = Math.floor(remain/60) + ":" + String(remain%60).padStart(2,"0");
+    whoEl.textContent = players[idx] + " の番";
   }
 
-  function applySettings() {
-    const c = Number(countEl.value);
-    limitSec = Math.max(5, Number(limitEl.value || 60));
-    players = nameInputs.slice(0, c).map((x, i) => (x.value || `P${i+1}`).trim());
-
-    idx = 0;
-    remaining = limitSec;
-    history = [];
-    timedOut = false;
-
-    stopTimer();
-    hintEl.textContent = "設定反映OK。開始してね";
-    render();
-  }
-
-  function nextPlayer() {
-    // 「進行中」でも「時間切れ後」でも次へは成立
-    history.push({ idx, remaining });
-
+  function next() {
     idx = (idx + 1) % players.length;
-    remaining = limitSec;
-
-    timedOut = false;
-    running = true;
-    hintEl.textContent = "進行中…";
-
-    // 次の人は即スタート
-    startInterval();
-
-    beep(120, 820);
-    render();
+    startTurn();
   }
 
-  function undo() {
-    const last = history.pop();
-    if (!last) return;
+  /* ===== 長押し（5秒） ===== */
+  let holdTimer = null;
+  const HOLD_TIME = 5000;
 
-    idx = last.idx;
-    remaining = last.remaining;
-
-    // undo後は「その状態で続行」できるようにする
-    timedOut = false;
-    if (!running) {
-      running = true;
-      hintEl.textContent = "進行中…";
-      startInterval();
-    }
-
-    hintEl.textContent = "取り消し完了";
-    render();
-  }
-
-  // オプション開閉
-  function setOptions(open) {
-    const isOpen = (open ?? !optionsPanel.classList.contains("open"));
-    optionsPanel.classList.toggle("open", isOpen);
-    optionsPanel.setAttribute("aria-hidden", String(!isOpen));
-    optionsBtn.setAttribute("aria-expanded", String(isOpen));
-  }
-
-  optionsBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    setOptions();
-    beep(90, 700);
+  $("centerTap").addEventListener("pointerdown", () => {
+    holdTimer = setTimeout(showSettings, HOLD_TIME);
   });
 
-  document.addEventListener("click", (e) => {
-    if (!optionsPanel.classList.contains("open")) return;
-    const t = e.target;
-    if (t === optionsBtn || optionsPanel.contains(t)) return;
-    setOptions(false);
+  ["pointerup","pointerleave","pointercancel"].forEach(ev =>
+    $("centerTap").addEventListener(ev, () => clearTimeout(holdTimer))
+  );
+
+  $("centerTap").addEventListener("click", () => {
+    if (mode === "play") next();
   });
 
-  // リセット：二段確認（誤爆防止）
-  let resetArmed = false;
-  let resetTimer = null;
+  /* ===== 設定 ===== */
+  $("start").onclick = () => {
+    players = names.slice(0, +countEl.value).map((n,i)=>n.value||"P"+(i+1));
+    limit = +limitEl.value || 60;
+    idx = 0;
+    showPlay();
+  };
 
-  function armReset() {
-    resetArmed = true;
-    resetEl.textContent = "もう一度押すとリセット";
-    hintEl.textContent = "リセット確認中（5秒以内にもう一度）";
-    beep(140, 520);
-
-    clearTimeout(resetTimer);
-    resetTimer = setTimeout(() => {
-      resetArmed = false;
-      resetEl.textContent = "リセット";
-      hintEl.textContent = "キャンセル";
-    }, 5000);
-  }
-
-  resetEl.addEventListener("click", () => {
-    if (!resetArmed) return armReset();
-
-    applySettings();
-    hintEl.textContent = "リセット完了";
-    resetArmed = false;
-    resetEl.textContent = "リセット";
-    setOptions(false);
-  });
-
-  // イベント
-  applyEl.addEventListener("click", () => applySettings());
-  startEl.addEventListener("click", () => startTimer());
-  nextEl.addEventListener("click", () => nextPlayer());
-  pauseEl.addEventListener("click", () => { stopTimer(); timedOut = false; hintEl.textContent = "一時停止中"; setOptions(false); render(); });
-  undoEl.addEventListener("click", () => { undo(); setOptions(false); });
-
-  applySettings();
+  $("reset").onclick = () => {
+    idx = 0;
+    showSettings();
+  };
 })();
 </script>
+
 </body>
 </html>
