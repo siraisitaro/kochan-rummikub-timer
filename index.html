@@ -77,6 +77,22 @@
     100% { transform: translateY(0px); }
   }
 
+  /* 言語切り替えボタン */
+  #langSwitch {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-family: var(--mono);
+    font-size: 14px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+  }
+
   #home.hidden{ display:none; }
 
   /* ===== PLAY ===== */
@@ -120,8 +136,8 @@
   }
   #hint{
     position: absolute; bottom: 30px;
-    font-size: 13px; color: var(--muted); opacity: .6;
-    pointer-events: none;
+    font-size: 13px; color: var(--muted); opacity: .8;
+    pointer-events: none; width: 90%;
   }
 
   .warning #time{ color: #ff4d4d; animation: pulse .75s infinite; }
@@ -191,8 +207,9 @@
 <body>
   <div id="home">
     <div class="home-bg"></div>
+    <button id="langSwitch">🇯🇵 日本語</button>
     <div class="homeCard">
-      <button id="goTimer" class="homeBtnPrimary">GAME START</button>
+      <button id="goTimer" class="homeBtnPrimary">ゲーム開始</button>
     </div>
   </div>
 
@@ -202,30 +219,30 @@
     <div id="centerTap">
       <div id="time">0:00</div>
       <div id="playerName">-</div>
-      <div id="hint">TAP: NEXT / TRIPLE: BACK / HOLD: SETTINGS</div>
+      <div id="hint">タップ: 次へ / 3回: 戻る / 長押し: 設定</div>
     </div>
   </div>
 
   <div id="settingsBackdrop">
     <div id="settingsModal">
-      <div style="padding: 20px 20px 0;"><h2>Settings</h2></div>
+      <div style="padding: 20px 20px 0;"><h2 id="lblSettingsTitle">設定</h2></div>
       <div id="settingsBody">
         <div class="grid">
-          <div><label>Players</label><select id="count"><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
-          <div><label>Time (sec)</label><input id="limit" type="number" value="60"></div>
+          <div><label id="lblCount">参加人数</label><select id="count"><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
+          <div><label id="lblLimit">制限時間（秒）</label><input id="limit" type="number" value="60"></div>
         </div>
         <div class="playersGrid" id="playersGrid">
-          <div class="playerWrap" data-p="1"><label>P1 Name</label><input class="pname" id="p1" value="Player 1"></div>
-          <div class="playerWrap" data-p="2"><label>P2 Name</label><input class="pname" id="p2" value="Player 2"></div>
-          <div class="playerWrap" data-p="3"><label>P3 Name</label><input class="pname" id="p3" value="Player 3"></div>
-          <div class="playerWrap" data-p="4"><label>P4 Name</label><input class="pname" id="p4" value="Player 4"></div>
-          <div class="playerWrap" data-p="5"><label>P5 Name</label><input class="pname" id="p5" value="Player 5"></div>
+          <div class="playerWrap" data-p="1"><label id="lblP1">プレイヤー1</label><input class="pname" id="p1" value="P1"></div>
+          <div class="playerWrap" data-p="2"><label id="lblP2">プレイヤー2</label><input class="pname" id="p2" value="P2"></div>
+          <div class="playerWrap" data-p="3"><label id="lblP3">プレイヤー3</label><input class="pname" id="p3" value="P3"></div>
+          <div class="playerWrap" data-p="4"><label id="lblP4">プレイヤー4</label><input class="pname" id="p4" value="P4"></div>
+          <div class="playerWrap" data-p="5"><label id="lblP5">プレイヤー5</label><input class="pname" id="p5" value="P5"></div>
         </div>
       </div>
       <div id="settingsFooter">
-        <button id="reset" class="btn btnDanger">Reset</button>
-        <button id="close" class="btn btnSecondary">Back</button>
-        <button id="start" class="btn btnPrimary">Start Game</button>
+        <button id="reset" class="btn btnDanger">リセット</button>
+        <button id="close" class="btn btnSecondary">戻る</button>
+        <button id="start" class="btn btnPrimary">スタート</button>
       </div>
     </div>
   </div>
@@ -247,6 +264,8 @@
   const progressFill = $("progressFill");
   const timeEl = $("time");
   const nameEl = $("playerName");
+  const hintEl = $("hint");
+  const langBtn = $("langSwitch");
   
   const modal = $("settingsBackdrop");
   const countEl = $("count");
@@ -264,7 +283,35 @@
   let remaining = 0;
   let timer = null;
   let playing = false;
-  let wakeLock = null;
+  let currentLang = "jp"; // Default JP
+
+  // Dictionary
+  const TRANS = {
+    jp: {
+      langLabel: "🇯🇵 日本語",
+      goTimer: "ゲーム開始",
+      hint: "タップ: 次へ / 3回: 戻る / 長押し: 設定",
+      lblSettingsTitle: "設定",
+      lblCount: "参加人数",
+      lblLimit: "制限時間（秒）",
+      lblP1: "プレイヤー1", lblP2: "プレイヤー2", lblP3: "プレイヤー3", lblP4: "プレイヤー4", lblP5: "プレイヤー5",
+      reset: "リセット",
+      close: "戻る",
+      start: "スタート"
+    },
+    en: {
+      langLabel: "🇺🇸 English",
+      goTimer: "GAME START",
+      hint: "TAP: NEXT / TRIPLE: BACK / HOLD: SETTINGS",
+      lblSettingsTitle: "SETTINGS",
+      lblCount: "PLAYERS",
+      lblLimit: "TIME LIMIT (sec)",
+      lblP1: "PLAYER 1", lblP2: "PLAYER 2", lblP3: "PLAYER 3", lblP4: "PLAYER 4", lblP5: "PLAYER 5",
+      reset: "RESET",
+      close: "BACK",
+      start: "START GAME"
+    }
+  };
 
   // Audio Context (Singleton)
   let actx = null;
@@ -273,12 +320,10 @@
     return actx;
   };
 
-  // --- Vibration Helper (追加機能) ---
   const vibrate = (pattern) => {
     if("vibrate" in navigator) navigator.vibrate(pattern);
   };
 
-  // Sound Engine
   const tone = (ms, freq, type, gainVol=0.05) => {
     try {
       const c = getCtx();
@@ -296,35 +341,64 @@
   };
 
   const sounds = {
-    click: () => { tone(80, 1100, "square", 0.04); vibrate(15); }, // 微細な振動
+    click: () => { tone(80, 1100, "square", 0.04); vibrate(15); }, 
     back:  () => { tone(90, 740, "square", 0.04); vibrate(20); },
     warn:  () => { tone(50, 1400, "square", 0.03); },
     alarm: () => { 
       tone(250, 520, "sawtooth", 0.05); 
       setTimeout(() => tone(250, 420, "sawtooth", 0.05), 280);
-      vibrate([200, 100, 200]); // ブブッ、ブブッ
+      vibrate([200, 100, 200]);
     },
     open:  () => { tone(150, 600, "sine", 0.05); vibrate(30); }
   };
 
   // --- Logic ---
+  const applyLang = () => {
+    const t = TRANS[currentLang];
+    langBtn.textContent = t.langLabel;
+    $("goTimer").textContent = t.goTimer;
+    hintEl.textContent = t.hint;
+    $("lblSettingsTitle").textContent = t.lblSettingsTitle;
+    $("lblCount").textContent = t.lblCount;
+    $("lblLimit").textContent = t.lblLimit;
+    $("lblP1").textContent = t.lblP1;
+    $("lblP2").textContent = t.lblP2;
+    $("lblP3").textContent = t.lblP3;
+    $("lblP4").textContent = t.lblP4;
+    $("lblP5").textContent = t.lblP5;
+    $("reset").textContent = t.reset;
+    $("close").textContent = t.close;
+    $("start").textContent = t.start;
+    
+    // Save preference
+    localStorage.setItem("rumi_lang", currentLang);
+  };
+
+  const toggleLang = () => {
+    currentLang = currentLang === "jp" ? "en" : "jp";
+    sounds.click();
+    applyLang();
+  };
+
   const loadSettings = () => {
-    // LocalStorageから読み込み (追加機能)
     try {
-      const saved = JSON.parse(localStorage.getItem("rumi_players"));
-      if(saved && Array.isArray(saved)){
-        saved.forEach((name, i) => { if(inputs[i]) inputs[i].value = name; });
+      const savedLang = localStorage.getItem("rumi_lang");
+      if(savedLang) currentLang = savedLang;
+      
+      const savedNames = JSON.parse(localStorage.getItem("rumi_players"));
+      if(savedNames && Array.isArray(savedNames)){
+        savedNames.forEach((name, i) => { if(inputs[i]) inputs[i].value = name; });
       }
       const savedCount = localStorage.getItem("rumi_count");
       if(savedCount) countEl.value = savedCount;
       const savedLimit = localStorage.getItem("rumi_limit");
       if(savedLimit) limitEl.value = savedLimit;
     } catch(e){}
+    applyLang(); // Apply lang after loading
     applyVis();
   };
 
   const saveSettings = () => {
-    // LocalStorageへ保存 (追加機能)
     const currentNames = inputs.map(i => i.value);
     localStorage.setItem("rumi_players", JSON.stringify(currentNames));
     localStorage.setItem("rumi_count", countEl.value);
@@ -342,7 +416,6 @@
     timeEl.textContent = `${m}:${String(s).padStart(2,"0")}`;
     nameEl.textContent = players[idx] || "-";
     
-    // Theme
     const c = THEME[idx % THEME.length] || "#fff";
     document.documentElement.style.setProperty("--theme", c);
     play.classList.add("theming");
@@ -381,19 +454,17 @@
   const prev = () => { idx = (idx-1+players.length)%players.length; sounds.back(); startTurn(); };
 
   // --- Interaction ---
+  langBtn.onclick = toggleLang;
+
   $("goTimer").onclick = () => {
     getCtx().resume();
     home.classList.add("hidden");
     modal.classList.add("open");
-    loadSettings(); // 設定画面を開くときにロード
   };
 
   $("start").onclick = () => {
-    // Wake Lock
     if('wakeLock' in navigator) navigator.wakeLock.request('screen').catch(()=>{});
-    
-    saveSettings(); // 開始時にセーブ
-    
+    saveSettings();
     const n = Number(countEl.value);
     limit = Number(limitEl.value);
     players = inputs.slice(0,n).map((inp,i) => inp.value || `P${i+1}`);
@@ -409,8 +480,8 @@
   };
   
   $("reset").onclick = () => {
-    localStorage.removeItem("rumi_players"); // リセットで保存データも消去
-    inputs.forEach((inp,i) => inp.value = `Player ${i+1}`);
+    localStorage.removeItem("rumi_players");
+    inputs.forEach((inp,i) => inp.value = `P${i+1}`);
     sounds.back();
   };
 
@@ -440,7 +511,7 @@
       playing = false; clearInterval(timer);
       sounds.open();
       modal.classList.add("open");
-    }, 1500); // 1.5秒長押し
+    }, 1500);
   };
   
   const clearHold = () => { if(holdTimer){ clearTimeout(holdTimer); holdTimer=null; }};
@@ -459,7 +530,6 @@
     }, 250);
   };
 
-  // Init
   loadSettings();
 })();
 </script>
