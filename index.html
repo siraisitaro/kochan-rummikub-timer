@@ -41,7 +41,7 @@
   input, select { user-select: auto; -webkit-user-select: auto; font-family: var(--sans); }
 
   /* ===== ICONS (SVG) ===== */
-  .icon { width: 24px; height: 24px; fill: currentColor; }
+  .icon { width: 28px; height: 28px; fill: currentColor; }
 
   /* ===== HOME ===== */
   #home{
@@ -93,23 +93,28 @@
   #progressOuter{ position: absolute; top: 0; left: 0; right: 0; height: 10px; background: rgba(255,255,255,.06); overflow: hidden; }
   #progressFill{ height: 100%; width: 0%; background: #fff; transition: width 0.2s linear; }
 
-  /* TOP CONTROLS (Pause/Mute) */
   #topControls {
-    position: absolute; top: max(env(safe-area-inset-top), 14px); left: 0; right: 0;
-    display: flex; justify-content: space-between; padding: 0 16px;
-    pointer-events: none; /* 下のタップを邪魔しない */
+    position: absolute; 
+    top: max(env(safe-area-inset-top), 24px);
+    left: 0; right: 0;
+    display: flex; justify-content: space-between; 
+    padding: 0 24px;
+    pointer-events: none;
     z-index: 10;
   }
   .controlBtn {
-    pointer-events: auto; /* ボタンだけ触れるように */
-    width: 44px; height: 44px; border-radius: 50%;
-    background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15);
-    color: rgba(255,255,255,0.8);
+    pointer-events: auto;
+    width: 54px; height: 54px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.5); border: 2px solid rgba(255,255,255,0.2);
+    color: white;
     display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(4px); cursor: pointer;
-    transition: transform 0.1s, background 0.1s;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    cursor: pointer;
+    transition: transform 0.1s, background 0.1s, border-color 0.1s;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
   }
-  .controlBtn:active { transform: scale(0.9); background: rgba(255,255,255,0.1); }
+  .controlBtn:active { transform: scale(0.85); background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.5); }
 
   #centerTap{
     position: absolute; inset: 0;
@@ -144,14 +149,31 @@
 
   /* ===== PAUSE OVERLAY ===== */
   #pauseOverlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     z-index: 50; display: none; flex-direction: column; align-items: center; justify-content: center;
     opacity: 0; transition: opacity 0.2s;
   }
   #pauseOverlay.open { display: flex; opacity: 1; }
-  .pauseTitle { font-size: 24px; font-weight: 700; margin-bottom: 30px; letter-spacing: 2px; }
-  .pauseMenu { display: flex; flex-direction: column; gap: 16px; width: min(280px, 80%); }
+  
+  .pauseTitle { 
+    font-size: 32px; font-weight: 900; margin-bottom: 40px; 
+    letter-spacing: 4px; color: #fff; text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  }
+  
+  /* ボタンを大きく、間隔を広く */
+  .pauseMenu { 
+    display: flex; flex-direction: column; gap: 20px; 
+    width: min(320px, 85%); 
+  }
+  
+  #pauseOverlay .btn {
+    height: 68px; /* 通常より高く */
+    font-size: 18px;
+    letter-spacing: 1px;
+    border-radius: 18px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  }
 
   /* ===== SETTINGS ===== */
   #settingsBackdrop{
@@ -196,7 +218,7 @@
   .btnSecondary{ background: rgba(255,255,255,.1); }
   .btnDanger{ background: rgba(255,77,77,.15); color: #ff6666; }
   
-  .btnWin { background: linear-gradient(135deg, #ffd700, #ffa500); color: #000; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4); }
+  .btnWin { background: linear-gradient(135deg, #ffd700, #ffa500); color: #000; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4); font-weight: 900 !important; }
 
   /* CONFETTI CANVAS */
   #confettiCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 200; }
@@ -219,11 +241,10 @@
     
     <!-- TOP ICONS -->
     <div id="topControls">
-      <button id="btnPause" class="controlBtn">
+      <button id="btnPause" class="controlBtn" aria-label="Pause">
         <svg class="icon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
       </button>
-      <button id="btnMute" class="controlBtn">
-        <!-- 音あり/なしはJSで切り替え -->
+      <button id="btnMute" class="controlBtn" aria-label="Mute">
         <svg class="icon" id="iconSound" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
       </button>
     </div>
@@ -237,7 +258,6 @@
 
   <!-- PAUSE OVERLAY -->
   <div id="pauseOverlay">
-    <!-- IDを追加して修正 -->
     <div id="pauseTitle" class="pauseTitle">PAUSED</div>
     <div class="pauseMenu">
       <button id="btnResume" class="btn btnPrimary">再開</button>
@@ -285,7 +305,6 @@
   const langBtn = $("langSwitch");
   const iconSound = $("iconSound");
   
-  // Pause Elements
   const pauseOverlay = $("pauseOverlay");
   const btnPause = $("btnPause");
   const btnResume = $("btnResume");
@@ -342,7 +361,6 @@
     alarm: () => { tone(250, 520, "sawtooth", 0.05); setTimeout(()=>tone(250, 420, "sawtooth", 0.05), 280); vibrate([200,100,200]); },
     open: () => tone(150, 600, "sine", 0.05),
     win: () => {
-      // Fanfare-ish
       if(muted) return;
       setTimeout(()=>tone(200, 523, "square"), 0);
       setTimeout(()=>tone(200, 659, "square"), 200);
@@ -392,8 +410,6 @@
     $("goTimer").textContent = t.goTimer; $("hint").textContent = t.hint;
     $("lblSettingsTitle").textContent = t.lblSettingsTitle; $("lblCount").textContent = t.lblCount; $("lblLimit").textContent = t.lblLimit;
     $("reset").textContent = t.reset; $("close").textContent = t.close; $("start").textContent = t.start;
-    // Overlay
-    // 修正: $(".pauseTitle") は $ 関数が getElementById なので機能しない。IDで取得するように修正。
     $("pauseTitle").textContent = t.pause; 
     btnResume.textContent = t.resume; btnQuit.textContent = t.quit; btnWin.textContent = t.win;
     
@@ -436,7 +452,6 @@
   // --- Controls ---
   const toggleMute = () => {
     muted = !muted;
-    // Update Icon
     const path = muted 
       ? "M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"
       : "M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z";
@@ -456,7 +471,7 @@
 
   const doQuit = () => {
     pauseOverlay.classList.remove("open");
-    play.classList.remove("active-press"); // remove any stuck effects
+    play.classList.remove("active-press");
     playing = false; paused = false; clearInterval(timer);
     $("home").classList.remove("hidden");
   };
@@ -464,7 +479,6 @@
   const doWin = () => {
     pauseOverlay.classList.remove("open");
     playing = false; paused = false; clearInterval(timer);
-    // Visuals
     fireConfetti();
     sounds.win();
     setTimeout(() => { $("home").classList.remove("hidden"); }, 2500);
@@ -504,7 +518,6 @@
   zone.onpointerdown = (e) => {
     if(!playing || paused) return;
     play.classList.add("active-press"); setTimeout(()=>play.classList.remove("active-press"),100);
-    // ripple
     const r = document.createElement("div"); r.className="ripple";
     const s = Math.max(window.innerWidth, window.innerHeight);
     r.style.width=r.style.height=`${s}px`; r.style.left=`${e.clientX-s/2}px`; r.style.top=`${e.clientY-s/2}px`;
