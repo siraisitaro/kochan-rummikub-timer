@@ -531,6 +531,7 @@
   const HOLD_MS = 5000;
   let holdTimer = null;
   let holdFired = false;
+  let longPressActive = false;   // ← 追加
 
   // Tap grouping for triple-tap
   let tapCount = 0;
@@ -758,38 +759,42 @@
     }
   });
 
-  // Full screen interactions
-  centerTap.addEventListener("pointerdown", (e) => {
-    if(!playing) return;
+ centerTap.addEventListener("pointerdown", (e) => {
+  if (!playing) return;
 
-    holdFired = false;
-    suppressClick = false;
+  longPressActive = false;
+  suppressClick = false;
 
-    rippleAt(e.clientX, e.clientY);
+  rippleAt(e.clientX, e.clientY);
 
-    holdTimer = setTimeout(() => {
-      holdFired = true;
-      suppressClick = true;
-      openSettings();
-      tone(120, 520, "square", 0.03);
-    }, HOLD_MS);
-  });
+  holdTimer = setTimeout(() => {
+    longPressActive = true;
+    suppressClick = true;
+
+    openSettings();
+    tone(120, 520, "square", 0.03);
+  }, HOLD_MS);
+});
+
 
   ["pointerup","pointercancel","pointerleave"].forEach(ev => {
-    centerTap.addEventListener(ev, () => {
-      if(holdTimer) clearTimeout(holdTimer);
-      holdTimer = null;
-    });
+  centerTap.addEventListener(ev, () => {
+    if (holdTimer) clearTimeout(holdTimer);
+    holdTimer = null;
   });
+});
+
 
   // Click/tap: accumulate for triple tap
-  centerTap.addEventListener("click", () => {
-    if(!playing) return;
-    if(suppressClick) return;
+ centerTap.addEventListener("click", () => {
+  if (!playing) return;
 
-    tapCount += 1;
-    scheduleTapAction();
-  });
+  // 長押しが成立していたら完全無視
+  if (longPressActive || suppressClick) return;
+
+  tapCount += 1;
+  scheduleTapAction();
+});
 
   // Init
   applyPlayerVisibility();
@@ -801,5 +806,6 @@
 </script>
 </body>
 </html>
+
 
 
