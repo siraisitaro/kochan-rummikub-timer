@@ -14,10 +14,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-<!-- Fonts: Roboto Mono (数字用) + Noto Sans JP (日本語用) -->
+<!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700&family=Roboto+Mono:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700;900&family=Roboto+Mono:wght@600;700&display=swap" rel="stylesheet">
 
 <style>
   :root{
@@ -26,243 +26,185 @@
     --text:#ffffff;
     --muted:#b7c0cc;
     --theme:#4f6d8a;
-    --themeSoft: rgba(79,109,138,.22);
     --accent:#2a63ff;
     --danger:#ff3b3b;
-    
-    /* フォント定義 */
     --mono: "Roboto Mono", monospace;
     --sans: "Noto Sans JP", system-ui, -apple-system, sans-serif;
   }
 
-  /* ===== 基本設定 ===== */
   body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans); /* 全体をNoto Sans JPに */
-    overflow: hidden;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-
-    /* 長押し・選択禁止 (アプリっぽさの肝) */
-    user-select: none; -webkit-user-select: none;
-    -webkit-touch-callout: none;
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: var(--sans); overflow: hidden;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
   }
+  input, select { user-select: auto; -webkit-user-select: auto; font-family: var(--sans); }
 
-  /* 入力欄だけは操作許可 */
-  input, select, textarea {
-    user-select: auto; -webkit-user-select: auto;
-    -webkit-touch-callout: default;
-    font-family: var(--sans);
-  }
+  /* ===== ICONS (SVG) ===== */
+  .icon { width: 24px; height: 24px; fill: currentColor; }
 
   /* ===== HOME ===== */
   #home{
     position: fixed; inset: 0;
-    display:flex; flex-direction:column;
-    align-items:center; justify-content:flex-end;
-    padding-bottom: max(env(safe-area-inset-bottom), 80px); /* iPhone下部バー対応 */
-    z-index: 60;
-    background: #1a2a6c;
-    transition: opacity 0.3s ease;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+    padding-bottom: max(env(safe-area-inset-bottom), 80px);
+    z-index: 60; background: #1a2a6c; transition: opacity 0.3s;
   }
   .home-bg{
-    position: fixed; inset: 0;
-    background: url("home-bg.png") center bottom / cover no-repeat;
-    z-index: -1;
+    position: fixed; inset: 0; background: url("home-bg.png") center bottom / cover no-repeat; z-index: -1;
   }
-  .homeCard{
-    background: transparent;
-    width: 100%; display: flex; justify-content: center;
-  }
+  .homeCard{ width: 100%; display: flex; justify-content: center; }
   
   .homeBtnPrimary{
     background: linear-gradient(180deg, #ff4d4d, #c41e1e);
-    border: 3px solid #fff;
-    border-radius: 50px;
-    padding: 0 40px;
-    height: 64px;
-    font-size: 20px;
-    font-weight: 800;
-    letter-spacing: 1px;
-    color: white;
+    border: 3px solid #fff; border-radius: 50px;
+    padding: 0 40px; height: 64px;
+    font-size: 20px; font-weight: 800; letter-spacing: 1px; color: white;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     animation: float 2s infinite ease-in-out;
-    cursor: pointer;
-    will-change: transform;
-    transition: transform 0.1s, filter 0.1s, box-shadow 0.1s;
+    cursor: pointer; will-change: transform;
+    transition: transform 0.1s, filter 0.1s;
     font-family: var(--sans);
   }
-  .homeBtnPrimary:active {
-    transform: scale(0.92);
-    filter: brightness(0.9);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-  }
-  @keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-6px); }
-    100% { transform: translateY(0px); }
-  }
+  .homeBtnPrimary:active { transform: scale(0.92); filter: brightness(0.9); }
+  @keyframes float { 0% { transform: translateY(0); } 50% { transform: translateY(-6px); } 100% { transform: translateY(0); } }
 
   #langSwitch {
-    position: absolute;
-    top: max(env(safe-area-inset-top), 20px); /* ノッチ回避 */
-    right: 20px;
-    background: rgba(0,0,0,0.6);
-    border: 1px solid rgba(255,255,255,0.3);
-    color: white;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-family: var(--mono);
-    font-size: 14px;
-    cursor: pointer;
-    backdrop-filter: blur(4px);
-    transition: transform 0.1s, background 0.1s;
+    position: absolute; top: max(env(safe-area-inset-top), 20px); right: 20px;
+    background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.3);
+    color: white; padding: 8px 16px; border-radius: 20px;
+    font-family: var(--mono); font-size: 14px; cursor: pointer;
+    backdrop-filter: blur(4px); transition: transform 0.1s;
   }
-  #langSwitch:active { transform: scale(0.95); background: rgba(255,255,255,0.2); }
-
+  #langSwitch:active { transform: scale(0.95); }
   #home.hidden{ opacity: 0; pointer-events: none; }
 
-  /* ===== PLAY (The Main Timer) ===== */
+  /* ===== PLAY ===== */
   #play{
     position: fixed; inset: 0;
     background: radial-gradient(circle at 50% 40%, rgba(255,255,255,.04), transparent 60%), var(--bg);
     border: 8px solid rgba(255,255,255,.06);
-    transition: border-color 0.2s, transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-    
-    /* これでプレイ画面全体が「物理スイッチ」になります */
+    transition: border-color 0.2s, transform 0.1s;
     transform-origin: center;
   }
-  
-  /* プレイ中のタップで画面全体が沈む演出 */
-  #play.active-press {
-    transform: scale(0.97);
-    border-color: rgba(255,255,255,0.15);
-  }
+  #play.active-press { transform: scale(0.97); border-color: rgba(255,255,255,0.15); }
+  #play.theming{ border-color: color-mix(in srgb, var(--theme) 70%, rgba(255,255,255,.1)); }
 
-  #play.theming{
-    border-color: color-mix(in srgb, var(--theme) 70%, rgba(255,255,255,.1));
-  }
+  #progressOuter{ position: absolute; top: 0; left: 0; right: 0; height: 10px; background: rgba(255,255,255,.06); overflow: hidden; }
+  #progressFill{ height: 100%; width: 0%; background: #fff; transition: width 0.2s linear; }
 
-  #progressOuter{
-    position: absolute; top: 0; left: 0; right: 0; height: 10px;
-    background: rgba(255,255,255,.06); overflow: hidden;
+  /* TOP CONTROLS (Pause/Mute) */
+  #topControls {
+    position: absolute; top: max(env(safe-area-inset-top), 14px); left: 0; right: 0;
+    display: flex; justify-content: space-between; padding: 0 16px;
+    pointer-events: none; /* 下のタップを邪魔しない */
+    z-index: 10;
   }
-  #progressFill{
-    height: 100%; width: 0%;
-    background: linear-gradient(90deg, rgba(255,255,255,.2), rgba(255,255,255,.05));
-    transition: width 0.2s linear;
+  .controlBtn {
+    pointer-events: auto; /* ボタンだけ触れるように */
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.8);
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px); cursor: pointer;
+    transition: transform 0.1s, background 0.1s;
   }
+  .controlBtn:active { transform: scale(0.9); background: rgba(255,255,255,0.1); }
 
   #centerTap{
     position: absolute; inset: 0;
-    display:flex; flex-direction:column;
-    align-items:center; justify-content:center;
-    text-align:center;
-    /* ガード設定 */
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; -webkit-touch-callout: none;
   }
 
   #time{
     font-family: var(--mono); font-weight: 700;
     font-size: min(24vw, 180px); line-height: 1; margin-top:10px;
-    text-shadow: 0 10px 40px rgba(0,0,0,.6);
-    font-variant-numeric: tabular-nums;
+    text-shadow: 0 10px 40px rgba(0,0,0,.6); font-variant-numeric: tabular-nums;
   }
   #playerName{
-    margin-top: 10px; font-family: var(--mono);
-    font-weight: 700; font-size: min(10vw, 50px);
-    text-shadow: 0 2px 10px rgba(0,0,0,.5);
+    margin-top: 10px; font-family: var(--mono); font-weight: 700;
+    font-size: min(10vw, 50px); text-shadow: 0 2px 10px rgba(0,0,0,.5);
   }
   #hint{
     position: absolute; bottom: max(env(safe-area-inset-bottom), 30px);
     font-size: 13px; color: var(--muted); opacity: .7;
-    pointer-events: none; width: 90%;
-    font-family: var(--sans); letter-spacing: 0.5px;
+    pointer-events: none; width: 90%; letter-spacing: 0.5px;
   }
 
   .warning #time{ color: #ff4d4d; animation: pulse .75s infinite; }
   @keyframes pulse{ 50%{ transform: scale(1.05); } }
-
-  .timeoutFlash #play{
-    box-shadow: inset 0 0 0 2px rgba(255,255,255,.1), 0 0 60px rgba(255,77,77,.4);
-    background-color: rgba(255,0,0,0.15);
-  }
-
+  .timeoutFlash #play{ box-shadow: inset 0 0 0 2px rgba(255,255,255,.1), 0 0 60px rgba(255,77,77,.4); background-color: rgba(255,0,0,0.15); }
+  
   .ripple{
-    position:absolute; border-radius: 50%;
-    background: rgba(255,255,255,.12);
-    transform: scale(0); animation: ripple .4s ease-out;
-    pointer-events:none;
+    position:absolute; border-radius: 50%; background: rgba(255,255,255,.12);
+    transform: scale(0); animation: ripple .4s ease-out; pointer-events:none;
   }
   @keyframes ripple{ to { transform: scale(1.8); opacity: 0; } }
 
-  /* ===== SETTINGS MODAL ===== */
+  /* ===== PAUSE OVERLAY ===== */
+  #pauseOverlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    z-index: 50; display: none; flex-direction: column; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.2s;
+  }
+  #pauseOverlay.open { display: flex; opacity: 1; }
+  .pauseTitle { font-size: 24px; font-weight: 700; margin-bottom: 30px; letter-spacing: 2px; }
+  .pauseMenu { display: flex; flex-direction: column; gap: 16px; width: min(280px, 80%); }
+
+  /* ===== SETTINGS ===== */
   #settingsBackdrop{
     position: fixed; inset: 0; background: rgba(0,0,0,.85);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    display: none; align-items: center; justify-content: center;
-    padding: 16px; z-index: 100;
-    opacity: 0; transition: opacity 0.25s ease;
+    backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center;
+    padding: 16px; z-index: 100; opacity: 0; transition: opacity 0.25s;
   }
   #settingsBackdrop.open{ display:flex; opacity: 1; }
-
   #settingsModal{
     width: min(600px, 100%); background: var(--panel);
     border: 1px solid rgba(255,255,255,.15); border-radius: 24px;
     display: flex; flex-direction: column; max-height: 85vh;
     box-shadow: 0 20px 60px rgba(0,0,0,.7);
-    
-    /* モーダルの出現アニメーション（下からふわっと） */
-    transform: translateY(30px) scale(0.95);
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateY(30px) scale(0.95); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  #settingsBackdrop.open #settingsModal {
-    transform: translateY(0) scale(1);
-  }
-
+  #settingsBackdrop.open #settingsModal { transform: translateY(0) scale(1); }
   #settingsBody{ padding: 20px; overflow-y: auto; }
   
   .grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .playersGrid{ 
-    display:grid; grid-template-columns: 1fr 1fr; gap: 12px; 
-    margin-top: 24px; padding-top: 20px; 
-    border-top: 1px solid rgba(255,255,255,0.1); 
-  }
-  
+  .playersGrid{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
   label{ display:block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 700;}
   input, select{
-    width:100%; height: 50px; padding: 0 16px;
-    border-radius: 12px; border: 1px solid rgba(255,255,255,.15);
-    background: rgba(0,0,0,.3); color: white;
-    font-size: 16px; box-sizing: border-box;
-    outline: none;
+    width:100%; height: 50px; padding: 0 16px; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.15); background: rgba(0,0,0,.3); color: white;
+    font-size: 16px; outline: none; box-sizing: border-box;
   }
-  input:focus, select:focus { border-color: var(--accent); background: rgba(0,0,0,.5); }
   .playerWrap.hidden{ display:none; }
-
   #settingsFooter{
     padding: 16px 20px; background: rgba(20,20,25,.95);
-    border-top: 1px solid rgba(255,255,255,.1);
-    display:flex; gap: 10px;
-    padding-bottom: max(env(safe-area-inset-bottom), 16px); /* iPhone下部バー対応 */
+    border-top: 1px solid rgba(255,255,255,.1); display:flex; gap: 10px;
+    padding-bottom: max(env(safe-area-inset-bottom), 16px);
   }
+  
   .btn{
     flex:1; height: 54px; border-radius: 14px; border:none;
     font-weight:700; font-size:16px; cursor:pointer; color: white;
-    transition: transform 0.1s, filter 0.1s;
-    font-family: var(--sans);
+    transition: transform 0.1s, filter 0.1s; font-family: var(--sans);
+    display: flex; align-items: center; justify-content: center;
   }
   .btn:active { transform: scale(0.96); filter: brightness(0.9); }
   .btnPrimary{ background: #2a63ff; box-shadow: 0 4px 12px rgba(42,99,255,0.3); }
-  .btnSecondary{ background: rgba(255,255,255,.1); max-width: 80px; }
-  .btnDanger{ background: rgba(255,77,77,.15); color: #ff6666; max-width: 80px; }
+  .btnSecondary{ background: rgba(255,255,255,.1); }
+  .btnDanger{ background: rgba(255,77,77,.15); color: #ff6666; }
+  
+  .btnWin { background: linear-gradient(135deg, #ffd700, #ffa500); color: #000; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4); }
+
+  /* CONFETTI CANVAS */
+  #confettiCanvas { position: fixed; inset: 0; pointer-events: none; z-index: 200; }
 </style>
 </head>
 
 <body>
+  <!-- HOME -->
   <div id="home">
     <div class="home-bg"></div>
     <button id="langSwitch">🇯🇵 日本語</button>
@@ -271,9 +213,21 @@
     </div>
   </div>
 
+  <!-- PLAY -->
   <div id="play" class="theming">
     <div id="progressOuter"><div id="progressFill"></div></div>
     
+    <!-- TOP ICONS -->
+    <div id="topControls">
+      <button id="btnPause" class="controlBtn">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+      </button>
+      <button id="btnMute" class="controlBtn">
+        <!-- 音あり/なしはJSで切り替え -->
+        <svg class="icon" id="iconSound" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+      </button>
+    </div>
+
     <div id="centerTap">
       <div id="time">0:00</div>
       <div id="playerName">-</div>
@@ -281,6 +235,18 @@
     </div>
   </div>
 
+  <!-- PAUSE OVERLAY -->
+  <div id="pauseOverlay">
+    <!-- IDを追加して修正 -->
+    <div id="pauseTitle" class="pauseTitle">PAUSED</div>
+    <div class="pauseMenu">
+      <button id="btnResume" class="btn btnPrimary">再開</button>
+      <button id="btnWin" class="btn btnWin">🏆 ゲーム終了 (勝利)</button>
+      <button id="btnQuit" class="btn btnSecondary">ホームへ戻る</button>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
   <div id="settingsBackdrop">
     <div id="settingsModal">
       <div style="padding: 20px 20px 0;"><h2 id="lblSettingsTitle">設定</h2></div>
@@ -305,29 +271,26 @@
     </div>
   </div>
 
+  <canvas id="confettiCanvas"></canvas>
+
 <script>
 (() => {
-  // --- Service Worker (PWA) ---
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(e => console.log(e));
-  }
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
 
   const $ = (id) => document.getElementById(id);
-  
-  // Elements
-  const home = $("home");
   const play = $("play");
-  const progressFill = $("progressFill");
   const timeEl = $("time");
   const nameEl = $("playerName");
-  const hintEl = $("hint");
+  const progressFill = $("progressFill");
   const langBtn = $("langSwitch");
+  const iconSound = $("iconSound");
   
-  const modal = $("settingsBackdrop");
-  const countEl = $("count");
-  const limitEl = $("limit");
-  const inputs = [...document.querySelectorAll(".pname")];
-  const wraps = [...document.querySelectorAll(".playerWrap")];
+  // Pause Elements
+  const pauseOverlay = $("pauseOverlay");
+  const btnPause = $("btnPause");
+  const btnResume = $("btnResume");
+  const btnQuit = $("btnQuit");
+  const btnWin = $("btnWin");
 
   const THEME = ["#ff4d4d", "#2a63ff", "#ffd24d", "#57d6a3", "#b070ff"];
   
@@ -337,133 +300,111 @@
   let remaining = 0;
   let timer = null;
   let playing = false;
+  let paused = false;
   let currentLang = "jp";
+  let muted = false;
 
-  // Dictionary
   const TRANS = {
     jp: {
-      langLabel: "🇯🇵 日本語",
-      goTimer: "ゲーム開始",
-      hint: "タップ: 次へ / 3回: 戻る / 長押し: 設定",
-      lblSettingsTitle: "設定",
-      lblCount: "参加人数",
-      lblLimit: "制限時間（秒）",
-      lblP1: "プレイヤー1", lblP2: "プレイヤー2", lblP3: "プレイヤー3", lblP4: "プレイヤー4", lblP5: "プレイヤー5",
-      reset: "リセット", close: "戻る", start: "スタート"
+      langLabel: "🇯🇵 日本語", goTimer: "ゲーム開始", hint: "タップ: 次へ / 3回: 戻る / 長押し: 設定",
+      lblSettingsTitle: "設定", lblCount: "参加人数", lblLimit: "制限時間（秒）",
+      reset: "リセット", close: "戻る", start: "スタート",
+      pause: "一時停止", resume: "再開", quit: "ホームへ", win: "🏆 ゲーム終了 (勝利)"
     },
     en: {
-      langLabel: "🇺🇸 English",
-      goTimer: "GAME START",
-      hint: "TAP: NEXT / TRIPLE: BACK / HOLD: SETTINGS",
-      lblSettingsTitle: "SETTINGS",
-      lblCount: "PLAYERS",
-      lblLimit: "TIME LIMIT (sec)",
-      lblP1: "PLAYER 1", lblP2: "PLAYER 2", lblP3: "PLAYER 3", lblP4: "PLAYER 4", lblP5: "PLAYER 5",
-      reset: "RESET", close: "BACK", start: "START GAME"
+      langLabel: "🇺🇸 English", goTimer: "GAME START", hint: "TAP: NEXT / TRIPLE: BACK / HOLD: SETTINGS",
+      lblSettingsTitle: "SETTINGS", lblCount: "PLAYERS", lblLimit: "TIME LIMIT (sec)",
+      reset: "RESET", close: "BACK", start: "START GAME",
+      pause: "PAUSED", resume: "RESUME", quit: "HOME", win: "🏆 FINISH (WINNER!)"
     }
   };
 
-  // Audio Context
+  // Audio
   let actx = null;
-  const getCtx = () => {
-    if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
-    return actx;
-  };
-
-  const vibrate = (pattern) => {
-    if("vibrate" in navigator) navigator.vibrate(pattern);
-  };
-
+  const getCtx = () => { if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); return actx; };
+  const vibrate = (p) => { if("vibrate" in navigator) navigator.vibrate(p); };
   const tone = (ms, freq, type, gainVol=0.05) => {
+    if(muted) return;
     try {
-      const c = getCtx();
-      const o = c.createOscillator();
-      const g = c.createGain();
-      o.type = type; o.frequency.value = freq;
-      const now = c.currentTime;
-      g.gain.setValueAtTime(0, now);
-      g.gain.linearRampToValueAtTime(gainVol, now + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.001, now + ms/1000);
-      o.connect(g); g.connect(c.destination);
-      o.start(now); o.stop(now + ms/1000 + 0.1);
+      const c = getCtx(); const o = c.createOscillator(); const g = c.createGain();
+      o.type = type; o.frequency.value = freq; const now = c.currentTime;
+      g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(gainVol, now+0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, now+ms/1000);
+      o.connect(g); g.connect(c.destination); o.start(now); o.stop(now+ms/1000+0.1);
       setTimeout(() => { o.disconnect(); g.disconnect(); }, ms+200);
     } catch(e){}
   };
 
   const sounds = {
-    click: () => { tone(80, 1100, "square", 0.04); vibrate(15); }, 
-    back:  () => { tone(90, 740, "square", 0.04); vibrate(20); },
-    warn:  () => { tone(50, 1400, "square", 0.03); },
-    alarm: () => { 
-      tone(250, 520, "sawtooth", 0.05); 
-      setTimeout(() => tone(250, 420, "sawtooth", 0.05), 280);
-      vibrate([200, 100, 200]);
-    },
-    open:  () => { tone(150, 600, "sine", 0.05); vibrate(30); }
+    click: () => tone(80, 1100, "square", 0.04),
+    back: () => tone(90, 740, "square", 0.04),
+    warn: () => tone(50, 1400, "square", 0.03),
+    alarm: () => { tone(250, 520, "sawtooth", 0.05); setTimeout(()=>tone(250, 420, "sawtooth", 0.05), 280); vibrate([200,100,200]); },
+    open: () => tone(150, 600, "sine", 0.05),
+    win: () => {
+      // Fanfare-ish
+      if(muted) return;
+      setTimeout(()=>tone(200, 523, "square"), 0);
+      setTimeout(()=>tone(200, 659, "square"), 200);
+      setTimeout(()=>tone(400, 784, "square"), 400);
+      setTimeout(()=>tone(600, 1046, "square"), 800);
+    }
+  };
+
+  // --- Confetti Logic ---
+  const fireConfetti = () => {
+    const canvas = $("confettiCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    const particles = [];
+    const colors = ['#ff4d4d', '#2a63ff', '#ffd24d', '#57d6a3', '#ffffff'];
+    
+    for(let i=0; i<150; i++){
+      particles.push({
+        x: canvas.width/2, y: canvas.height/2,
+        vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15 - 5,
+        color: colors[Math.floor(Math.random()*colors.length)],
+        size: Math.random()*8+4, life: 100
+      });
+    }
+
+    const draw = () => {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      let active = false;
+      particles.forEach(p => {
+        if(p.life > 0){
+          active = true;
+          p.x += p.vx; p.y += p.vy; p.vy += 0.3; p.life--;
+          ctx.fillStyle = p.color;
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+        }
+      });
+      if(active) requestAnimationFrame(draw);
+      else ctx.clearRect(0,0,canvas.width,canvas.height);
+    };
+    draw();
   };
 
   // --- Logic ---
   const applyLang = () => {
     const t = TRANS[currentLang];
     langBtn.textContent = t.langLabel;
-    $("goTimer").textContent = t.goTimer;
-    hintEl.textContent = t.hint;
-    $("lblSettingsTitle").textContent = t.lblSettingsTitle;
-    $("lblCount").textContent = t.lblCount;
-    $("lblLimit").textContent = t.lblLimit;
-    $("lblP1").textContent = t.lblP1;
-    $("lblP2").textContent = t.lblP2;
-    $("lblP3").textContent = t.lblP3;
-    $("lblP4").textContent = t.lblP4;
-    $("lblP5").textContent = t.lblP5;
-    $("reset").textContent = t.reset;
-    $("close").textContent = t.close;
-    $("start").textContent = t.start;
+    $("goTimer").textContent = t.goTimer; $("hint").textContent = t.hint;
+    $("lblSettingsTitle").textContent = t.lblSettingsTitle; $("lblCount").textContent = t.lblCount; $("lblLimit").textContent = t.lblLimit;
+    $("reset").textContent = t.reset; $("close").textContent = t.close; $("start").textContent = t.start;
+    // Overlay
+    // 修正: $(".pauseTitle") は $ 関数が getElementById なので機能しない。IDで取得するように修正。
+    $("pauseTitle").textContent = t.pause; 
+    btnResume.textContent = t.resume; btnQuit.textContent = t.quit; btnWin.textContent = t.win;
+    
+    for(let i=1; i<=5; i++) $(`lblP${i}`).textContent = currentLang==="jp" ? `プレイヤー${i}` : `PLAYER ${i}`;
     localStorage.setItem("rumi_lang", currentLang);
   };
 
-  const toggleLang = () => {
-    currentLang = currentLang === "jp" ? "en" : "jp";
-    sounds.click();
-    applyLang();
-  };
-
-  const loadSettings = () => {
-    try {
-      const savedLang = localStorage.getItem("rumi_lang");
-      if(savedLang) currentLang = savedLang;
-      
-      const savedNames = JSON.parse(localStorage.getItem("rumi_players"));
-      if(savedNames && Array.isArray(savedNames)){
-        savedNames.forEach((name, i) => { if(inputs[i]) inputs[i].value = name; });
-      }
-      const savedCount = localStorage.getItem("rumi_count");
-      if(savedCount) countEl.value = savedCount;
-      const savedLimit = localStorage.getItem("rumi_limit");
-      if(savedLimit) limitEl.value = savedLimit;
-    } catch(e){}
-    applyLang();
-    applyVis();
-  };
-
-  const saveSettings = () => {
-    const currentNames = inputs.map(i => i.value);
-    localStorage.setItem("rumi_players", JSON.stringify(currentNames));
-    localStorage.setItem("rumi_count", countEl.value);
-    localStorage.setItem("rumi_limit", limitEl.value);
-  };
-
-  const applyVis = () => {
-    const n = Number(countEl.value);
-    wraps.forEach((w, i) => w.classList.toggle("hidden", i >= n));
-  };
-
   const updateUI = () => {
-    const m = Math.floor(remaining/60);
-    const s = remaining % 60;
+    const m = Math.floor(remaining/60); const s = remaining % 60;
     timeEl.textContent = `${m}:${String(s).padStart(2,"0")}`;
     nameEl.textContent = players[idx] || "-";
-    
     const c = THEME[idx % THEME.length] || "#fff";
     document.documentElement.style.setProperty("--theme", c);
     play.classList.add("theming");
@@ -472,119 +413,125 @@
   };
 
   const tick = () => {
-    if(!playing) return;
+    if(!playing || paused) return;
     if(remaining <= 10 && remaining > 0) { sounds.warn(); document.body.classList.add("warning"); }
     else document.body.classList.remove("warning");
-    
     remaining--;
     updateUI();
-    
     if(remaining < 0) {
-      clearInterval(timer);
-      remaining = 0; updateUI();
-      sounds.alarm();
+      clearInterval(timer); remaining = 0; updateUI(); sounds.alarm();
       document.body.classList.add("timeoutFlash");
       setTimeout(()=>document.body.classList.remove("timeoutFlash"), 400);
     }
   };
 
   const startTurn = () => {
-    clearInterval(timer);
-    remaining = limit;
-    document.body.classList.remove("warning");
-    updateUI();
-    timer = setInterval(tick, 1000);
+    clearInterval(timer); remaining = limit; document.body.classList.remove("warning");
+    updateUI(); timer = setInterval(tick, 1000);
   };
 
   const next = () => { idx = (idx+1)%players.length; sounds.click(); startTurn(); };
   const prev = () => { idx = (idx-1+players.length)%players.length; sounds.back(); startTurn(); };
 
-  // --- Interaction ---
-  langBtn.onclick = toggleLang;
-
-  $("goTimer").onclick = () => {
-    getCtx().resume();
-    home.classList.add("hidden");
-    modal.classList.add("open");
+  // --- Controls ---
+  const toggleMute = () => {
+    muted = !muted;
+    // Update Icon
+    const path = muted 
+      ? "M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"
+      : "M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z";
+    $("iconSound").innerHTML = `<path d="${path}"/>`;
   };
 
+  const doPause = () => {
+    if(!playing) return;
+    paused = true; clearInterval(timer);
+    pauseOverlay.classList.add("open");
+  };
+
+  const doResume = () => {
+    paused = false; pauseOverlay.classList.remove("open");
+    timer = setInterval(tick, 1000);
+  };
+
+  const doQuit = () => {
+    pauseOverlay.classList.remove("open");
+    play.classList.remove("active-press"); // remove any stuck effects
+    playing = false; paused = false; clearInterval(timer);
+    $("home").classList.remove("hidden");
+  };
+
+  const doWin = () => {
+    pauseOverlay.classList.remove("open");
+    playing = false; paused = false; clearInterval(timer);
+    // Visuals
+    fireConfetti();
+    sounds.win();
+    setTimeout(() => { $("home").classList.remove("hidden"); }, 2500);
+  };
+
+  // --- Listeners ---
+  $("btnPause").onclick = doPause;
+  $("btnMute").onclick = toggleMute;
+  btnResume.onclick = doResume;
+  btnQuit.onclick = doQuit;
+  btnWin.onclick = doWin;
+  
+  langBtn.onclick = () => { currentLang = currentLang==="jp"?"en":"jp"; sounds.click(); applyLang(); };
+  $("goTimer").onclick = () => { getCtx().resume(); $("home").classList.add("hidden"); $("settingsBackdrop").classList.add("open"); };
+  
   $("start").onclick = () => {
     if('wakeLock' in navigator) navigator.wakeLock.request('screen').catch(()=>{});
-    saveSettings();
-    const n = Number(countEl.value);
-    limit = Number(limitEl.value);
-    players = inputs.slice(0,n).map((inp,i) => inp.value || `P${i+1}`);
-    idx = 0;
-    playing = true;
-    modal.classList.remove("open");
+    const cVal = $("count").value; localStorage.setItem("rumi_count", cVal);
+    const lVal = $("limit").value; localStorage.setItem("rumi_limit", lVal);
+    limit = Number(lVal);
+    players = [...document.querySelectorAll(".pname")].slice(0,Number(cVal)).map((inp,i)=>inp.value||`P${i+1}`);
+    localStorage.setItem("rumi_players", JSON.stringify(players.map((_,i)=>document.querySelectorAll(".pname")[i].value)));
+    
+    idx = 0; playing = true; paused = false;
+    $("settingsBackdrop").classList.remove("open");
     startTurn();
   };
 
-  $("close").onclick = () => {
-    if(playing) modal.classList.remove("open");
-    else { modal.classList.remove("open"); home.classList.remove("hidden"); }
-  };
-  
-  $("reset").onclick = () => {
-    localStorage.removeItem("rumi_players");
-    inputs.forEach((inp,i) => inp.value = `P${i+1}`);
-    sounds.back();
-  };
+  $("close").onclick = () => { $("settingsBackdrop").classList.remove("open"); $("home").classList.remove("hidden"); };
+  $("reset").onclick = () => { localStorage.removeItem("rumi_players"); [...document.querySelectorAll(".pname")].forEach((p,i)=>p.value=`P${i+1}`); sounds.back(); };
+  $("count").onchange = () => { const n = Number($("count").value); [...document.querySelectorAll(".playerWrap")].forEach((w,i)=>w.classList.toggle("hidden", i>=n)); };
 
-  countEl.onchange = applyVis;
-
-  // Tap & Hold Logic
-  let tapCnt = 0;
-  let tapTimer = null;
-  let holdTimer = null;
+  // Tap Logic
+  let tapCnt=0, tapTimer=null, holdTimer=null;
   const zone = $("centerTap");
-
-  // Visual feedback: Screen Press Effect
-  const pressScreen = () => {
-    play.classList.add("active-press");
-    setTimeout(() => play.classList.remove("active-press"), 100);
-  };
-
-  const ripple = (x,y) => {
-    const r = document.createElement("div");
-    r.className = "ripple";
-    const s = Math.max(window.innerWidth, window.innerHeight);
-    r.style.width=r.style.height=`${s}px`;
-    r.style.left=`${x-s/2}px`; r.style.top=`${y-s/2}px`;
-    play.appendChild(r);
-    setTimeout(()=>r.remove(), 500);
-  };
-
+  
   zone.onpointerdown = (e) => {
-    if(!playing) return;
-    ripple(e.clientX, e.clientY);
-    pressScreen(); // 画面沈み込み発動！
-    
-    holdTimer = setTimeout(() => {
-      holdTimer = null;
-      playing = false; clearInterval(timer);
-      sounds.open();
-      modal.classList.add("open");
+    if(!playing || paused) return;
+    play.classList.add("active-press"); setTimeout(()=>play.classList.remove("active-press"),100);
+    // ripple
+    const r = document.createElement("div"); r.className="ripple";
+    const s = Math.max(window.innerWidth, window.innerHeight);
+    r.style.width=r.style.height=`${s}px`; r.style.left=`${e.clientX-s/2}px`; r.style.top=`${e.clientY-s/2}px`;
+    play.appendChild(r); setTimeout(()=>r.remove(),500);
+
+    holdTimer = setTimeout(()=>{
+      holdTimer=null; playing=false; clearInterval(timer); sounds.open();
+      $("settingsBackdrop").classList.add("open");
     }, 1500);
   };
-  
   const clearHold = () => { if(holdTimer){ clearTimeout(holdTimer); holdTimer=null; }};
-  zone.onpointerup = clearHold;
-  zone.onpointercancel = clearHold;
-  zone.onpointerleave = clearHold;
-
-  zone.onclick = (e) => {
-    if(!playing) return;
-    tapCnt++;
-    if(tapTimer) clearTimeout(tapTimer);
-    tapTimer = setTimeout(() => {
-      if(tapCnt >= 3) prev();
-      else next();
-      tapCnt = 0;
-    }, 250);
+  zone.onpointerup = zone.onpointercancel = zone.onpointerleave = clearHold;
+  zone.onclick = () => {
+    if(!playing || paused) return;
+    tapCnt++; if(tapTimer) clearTimeout(tapTimer);
+    tapTimer = setTimeout(()=>{ if(tapCnt>=3) prev(); else next(); tapCnt=0; }, 250);
   };
 
-  loadSettings();
+  // Init
+  try{
+    const sl = localStorage.getItem("rumi_lang"); if(sl) currentLang=sl;
+    const sc = localStorage.getItem("rumi_count"); if(sc) $("count").value=sc;
+    const sli = localStorage.getItem("rumi_limit"); if(sli) $("limit").value=sli;
+    const sp = JSON.parse(localStorage.getItem("rumi_players"));
+    if(sp) sp.forEach((n,i)=>{ if(document.querySelectorAll(".pname")[i]) document.querySelectorAll(".pname")[i].value=n; });
+  }catch(e){}
+  applyLang(); $("count").onchange();
 })();
 </script>
 </body>
