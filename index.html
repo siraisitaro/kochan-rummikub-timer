@@ -54,17 +54,24 @@
 
   z-index: 60;
 }
+/* ホーム背景（イラスト用） */
+.home-bg{
+  position: fixed;
+  inset: 0;
+  background: url("home.png") center / cover no-repeat;
+  filter: blur(4px) brightness(0.6);
+  transform: scale(1.05);
+  z-index: -1;
+}
+
 #home.hidden{ display:none; }
 
-  .homeCard{
-    width: min(820px, 100%);
-    background: rgba(255,255,255,.03);
-    border: 1px solid rgba(255,255,255,.10);
-    border-radius: 22px;
-    padding: 22px 18px;
-    box-shadow: 0 26px 70px rgba(0,0,0,.6);
-    backdrop-filter: blur(10px);
-  }
+ .homeCard{
+  background: rgba(20,20,20,0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
   .homeTitle{
     font-family: var(--mono);
     font-weight: 700;
@@ -407,15 +414,15 @@
 <body>
   <!-- HOME -->
   <div id="home">
+  <div class="home-bg"></div>
     <div class="homeCard">
       <h1 class="homeTitle">Rummikub Turn Timer</h1>
-      <p class="homeSub">
-        テーブルを囲んで使うターンタイマー。<br>
-        プレイ画面は「どこでもタップで次へ」。
-      </p>
-      <div class="homeActions">
-  <button id="goTimer" class="homeBtn homeBtnPrimary" type="button">タイマーを使う</button>
+
+
+  <div class="homeActions">
+  <button id="goTimer" class="homeBtn homeBtnPrimary">タップして開始</button>
 </div>
+
 
     </div>
   </div>
@@ -806,6 +813,7 @@
 </script>
 </body>
 </html>
+
 
 
 
