@@ -423,7 +423,7 @@
   <!-- PLAY -->
   <div id="play" class="theming">
     <div id="progressOuter"><div id="progressFill"></div></div>
-    <div id="playBadge">Tap: Next | Triple: Back | Hold 5s: Settings</div>
+    <div id="playBadge">Tap: Next | Triple: Back | Hold 3s: Settings</div>
 
     <div id="centerTap">
       <div id="time">0:00</div>
@@ -528,7 +528,7 @@
   let timedOut = false;
 
   // Long press
-  const HOLD_MS = 5000;
+  const HOLD_MS = 3000;
   let holdTimer = null;
   let holdFired = false;
   let longPressActive = false;   // ← 追加
@@ -651,7 +651,7 @@
       timedOut = true;
       alarmSound();
       flashTimeout();
-      hintEl.textContent = "タップで次へ / トリプルタップで戻る / 5秒長押しで設定";
+      hintEl.textContent = "タップで次へ / トリプルタップで戻る / 3秒長押しで設定";
     }
   }
 
@@ -806,6 +806,7 @@
 </script>
 </body>
 </html>
+
 
 
 
