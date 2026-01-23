@@ -34,21 +34,27 @@
     color: var(--text);
   }
 
-  /* ===== HOME (title screen) ===== */
-  #home{
-    position: fixed;
-    inset: 0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding: 18px;
-    background:
-      radial-gradient(900px 600px at 50% 30%, rgba(255,255,255,.06), transparent 60%),
-      linear-gradient(180deg, rgba(255,255,255,.04), transparent 32%),
-      var(--bg);
-    z-index: 60;
-  }
-  #home.hidden{ display:none; }
+/* ===== HOME (title screen) ===== */
+#home{
+  position: fixed;
+  inset: 0;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding: 24px 18px 36px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0,0,0,.15) 0%,
+      rgba(0,0,0,.55) 55%,
+      rgba(0,0,0,.85) 100%
+    ),
+    url("home-bg.png") center / cover no-repeat;
+
+  z-index: 60;
+}
+#home.hidden{ display:none; }
 
   .homeCard{
     width: min(820px, 100%);
@@ -795,4 +801,5 @@
 </script>
 </body>
 </html>
+
 
