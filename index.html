@@ -1,57 +1,802 @@
-/* SETTINGS MODAL: 画面内に収めて、本文だけスクロールさせる */
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rummikub Turn Timer</title>
+
+<!-- Roboto Mono（等幅） -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#121212;
+    --panel:#171a1f;
+    --line:#2a2f36;
+    --text:#ffffff;
+    --muted:#b7c0cc;
+
+    --theme:#4f6d8a;
+    --themeSoft: rgba(79,109,138,.22);
+
+    --accent:#2a63ff;
+    --danger:#ff3b3b;
+
+    --mono: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  /* ===== HOME (title screen) ===== */
+  #home{
+    position: fixed;
+    inset: 0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 18px;
+    background:
+      radial-gradient(900px 600px at 50% 30%, rgba(255,255,255,.06), transparent 60%),
+      linear-gradient(180deg, rgba(255,255,255,.04), transparent 32%),
+      var(--bg);
+    z-index: 60;
+  }
+  #home.hidden{ display:none; }
+
+  .homeCard{
+    width: min(820px, 100%);
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 22px;
+    padding: 22px 18px;
+    box-shadow: 0 26px 70px rgba(0,0,0,.6);
+    backdrop-filter: blur(10px);
+  }
+  .homeTitle{
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: clamp(22px, 5vw, 36px);
+    letter-spacing: .4px;
+    margin: 0;
+  }
+  .homeSub{
+    margin: 10px 0 18px;
+    color: rgba(255,255,255,.78);
+    line-height: 1.45;
+    font-size: 14px;
+  }
+  .homeActions{
+    display:flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .homeBtn{
+    height: 56px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(0,0,0,.22);
+    color: var(--text);
+    font-weight: 800;
+    font-size: 16px;
+    padding: 0 18px;
+    cursor: pointer;
+  }
+  .homeBtnPrimary{
+    flex: 1 1 220px;
+    background: linear-gradient(180deg, rgba(42,99,255,.95), rgba(42,99,255,.72));
+    border-color: rgba(42,99,255,.7);
+    box-shadow: 0 10px 26px rgba(42,99,255,.16);
+  }
+  .homeBtnSecondary{
+    flex: 1 1 180px;
+  }
+
+  /* ===== PLAY ===== */
+  #play{
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(1200px 700px at 50% 40%, rgba(255,255,255,.04), transparent 60%),
+      linear-gradient(180deg, rgba(255,255,255,.03), transparent 25%),
+      var(--bg);
+    border: 10px solid rgba(255,255,255,.06);
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.02);
+    transition: border-color .15s ease, box-shadow .15s ease, background .2s ease;
+  }
+  #play.theming{
+    border-color: color-mix(in srgb, var(--theme) 70%, rgba(255,255,255,.08));
+    box-shadow:
+      inset 0 0 0 2px rgba(255,255,255,.03),
+      0 0 0 1px rgba(255,255,255,.03),
+      0 0 26px rgba(0,0,0,.45),
+      0 0 44px var(--themeSoft);
+  }
+
+  #progressOuter{
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 10px;
+    background: rgba(255,255,255,.06);
+    overflow: hidden;
+  }
+  #progressFill{
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, rgba(255,255,255,.15), rgba(255,255,255,.05));
+    position: relative;
+  }
+  #progressFill::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+    transform: translateX(-60%);
+    animation: sheen 2.2s infinite;
+    opacity: .55;
+  }
+  @keyframes sheen{
+    0% { transform: translateX(-60%); }
+    100% { transform: translateX(160%); }
+  }
+
+  #centerTap{
+    position: absolute;
+    inset: 0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    user-select:none;
+    touch-action: manipulation;
+  }
+
+  #time{
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: min(22vw, 170px);
+    letter-spacing: 1px;
+    line-height: 1;
+    margin: 6px 0 0;
+    text-shadow: 0 10px 26px rgba(0,0,0,.55);
+  }
+
+  /* 「の番」を廃止して、名前を大きく */
+  #playerName{
+    margin-top: 14px;
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: min(8vw, 48px);
+    color: rgba(255,255,255,.95);
+  }
+
+  #hint{
+    margin-top: 14px;
+    font-size: 14px;
+    color: var(--muted);
+    opacity: .9;
+    line-height: 1.35;
+  }
+
+  .warning #time{
+    color: #ff4d4d;
+    animation: pulse .75s infinite;
+  }
+  .warning #play{
+    background:
+      radial-gradient(900px 600px at 50% 40%, rgba(255,77,77,.10), transparent 60%),
+      linear-gradient(180deg, rgba(255,255,255,.03), transparent 25%),
+      var(--bg);
+  }
+  @keyframes pulse{
+    0%{ transform: scale(1); }
+    50%{ transform: scale(1.055); }
+    100%{ transform: scale(1); }
+  }
+
+  .timeoutFlash #play{
+    box-shadow:
+      inset 0 0 0 2px rgba(255,255,255,.03),
+      0 0 0 1px rgba(255,255,255,.03),
+      0 0 60px rgba(255,77,77,.22);
+  }
+
+  .ripple{
+    position:absolute;
+    border-radius: 9999px;
+    background: rgba(255,255,255,.14);
+    transform: scale(0);
+    animation: ripple .55s ease-out;
+    pointer-events:none;
+  }
+  @keyframes ripple{
+    to { transform: scale(1); opacity: 0; }
+  }
+
+  #playBadge{
+    position:absolute;
+    top: 14px;
+    right: 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: rgba(255,255,255,.72);
+    background: rgba(0,0,0,.28);
+    border: 1px solid rgba(255,255,255,.10);
+    padding: 8px 10px;
+    border-radius: 999px;
+    backdrop-filter: blur(6px);
+    user-select:none;
+  }
+
+  /* ===== SETTINGS MODAL ===== */
+  #settingsBackdrop{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.66);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 55;
+  }
+  #settingsBackdrop.open{ display:flex; }
+
+  #settingsModal{
+    width: min(780px, 100%);
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 18px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.55);
+    overflow: hidden;
+    position: relative;
+  }
+
+  #settingsHeader{
+    padding: 18px 18px 10px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  #settingsHeader h2{
+    margin: 0;
+    font-size: 22px;
+    letter-spacing: .2px;
+  }
+  #settingsHeader p{
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  #settingsBody{
+    padding: 16px 18px 120px;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  @media (max-width: 560px){
+    .grid{ grid-template-columns: 1fr; }
+  }
+
+  .field label{
+    display:block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .field input, .field select{
+    width:100%;
+    height: 48px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(0,0,0,.25);
+    color: var(--text);
+    outline: none;
+  }
+  .field input:focus, .field select:focus{
+    border-color: color-mix(in srgb, var(--accent) 70%, rgba(255,255,255,.14));
+    box-shadow: 0 0 0 3px rgba(42,99,255,.22);
+  }
+
+  .playersGrid{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+  }
+  @media (max-width: 560px){
+    .playersGrid{ grid-template-columns: 1fr; }
+  }
+
+  .playerWrap.hidden{ display:none; }
+
+  #settingsFooter{
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 14px 18px;
+    background: linear-gradient(180deg, rgba(23,26,31,0), rgba(23,26,31,1) 45%);
+    border-top: 1px solid rgba(255,255,255,.08);
+    display:flex;
+    gap: 12px;
+    align-items:center;
+  }
+
+  .btn{
+    height: 54px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(0,0,0,.22);
+    color: var(--text);
+    font-weight: 800;
+    font-size: 16px;
+    padding: 0 14px;
+    cursor:pointer;
+  }
+  .btnPrimary{
+    flex: 1;
+    background: linear-gradient(180deg, rgba(42,99,255,.95), rgba(42,99,255,.75));
+    border-color: rgba(42,99,255,.7);
+    box-shadow: 0 10px 26px rgba(42,99,255,.16);
+  }
+  .btnSecondary{
+    width: 120px;
+    background: rgba(255,255,255,.04);
+  }
+  .btnSecondary:hover{ background: rgba(255,255,255,.06); }
+
+  .btnDanger{
+    width: 120px;
+    background: rgba(255,77,77,.12);
+    border-color: rgba(255,77,77,.22);
+  }
+  /* ===== FIX: SETTINGS MODAL SCROLL ===== */
+
+/* モーダル全体を縦Flexに */
 #settingsModal{
-  width: min(780px, 100%);
-  max-height: min(92vh, 860px);          /* 画面からはみ出さない */
-  background: var(--panel);
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 18px;
-  box-shadow: 0 20px 60px rgba(0,0,0,.55);
-  overflow: hidden;
-
-  display: flex;                          /* ★縦Flexにする */
+  display: flex;
   flex-direction: column;
-  position: relative;
+
+  max-height: 92vh;          /* 画面からはみ出さない */
 }
 
-/* ヘッダーは固定（スクロールしない） */
+/* ヘッダーは固定 */
 #settingsHeader{
-  padding: 18px 18px 10px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
   flex: 0 0 auto;
 }
 
-/* 本文だけスクロールする領域 */
+/* 本文だけスクロールさせる */
 #settingsBody{
-  padding: 16px 18px 18px;               /* 下の余白を普通に */
-  flex: 1 1 auto;                         /* ★伸びる */
-  overflow: auto;                         /* ★ここがスクロール */
-  -webkit-overflow-scrolling: touch;      /* iPhoneで慣性スクロール */
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding-bottom: 24px;      /* フッターに被らない余白 */
+  -webkit-overflow-scrolling: touch;
 }
 
-/* フッターは下に張り付く（スクロールしない） */
+/* フッターは下に張り付く（absolute禁止） */
 #settingsFooter{
-  position: sticky;                       /* ★absoluteをやめる */
+  position: sticky;
   bottom: 0;
-  left: 0; right: 0;
-  padding: 14px 18px;
-  background: linear-gradient(180deg, rgba(23,26,31,0), rgba(23,26,31,1) 45%);
-  border-top: 1px solid rgba(255,255,255,.08);
-  display:flex;
-  gap: 12px;
-  align-items:center;
+
   flex: 0 0 auto;
+  background: linear-gradient(
+    180deg,
+    rgba(23,26,31,0),
+    rgba(23,26,31,1) 45%
+  );
 }
 
-/* Backdropは常に中央寄せ */
-#settingsBackdrop{
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.66);
-  backdrop-filter: blur(8px);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  z-index: 55;
-}
-#settingsBackdrop.open{ display:flex; }
+</style>
+</head>
+
+<body>
+  <!-- HOME -->
+  <div id="home">
+    <div class="homeCard">
+      <h1 class="homeTitle">Rummikub Turn Timer</h1>
+      <p class="homeSub">
+        テーブルを囲んで使うターンタイマー。<br>
+        プレイ画面は「どこでもタップで次へ」。
+      </p>
+      <div class="homeActions">
+        <button id="goTimer" class="homeBtn homeBtnPrimary" type="button">タイマーを使う</button>
+        <button id="openSettingsFromHome" class="homeBtn homeBtnSecondary" type="button">設定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLAY -->
+  <div id="play" class="theming">
+    <div id="progressOuter"><div id="progressFill"></div></div>
+    <div id="playBadge">Tap: Next | Triple: Back | Hold 5s: Settings</div>
+
+    <div id="centerTap">
+      <div id="time">0:00</div>
+      <div id="playerName">-</div>
+      <div id="hint">どこでもタップで次へ / トリプルタップで戻る / 5秒長押しで設定</div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settingsBackdrop" aria-hidden="true">
+    <div id="settingsModal" role="dialog" aria-modal="true">
+      <div id="settingsHeader">
+        <h2>設定</h2>
+        <p>人数と制限時間をセットして「開始」。プレイ中は全画面タップで進行します。</p>
+      </div>
+
+      <div id="settingsBody">
+        <div class="grid">
+          <div class="field">
+            <label for="count">参加人数（2〜5）</label>
+            <select id="count">
+              <option>2</option>
+              <option selected>3</option>
+              <option>4</option>
+              <option>5</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="limit">制限時間（秒）</label>
+            <input id="limit" type="number" min="5" step="5" value="60">
+          </div>
+        </div>
+
+        <div class="playersGrid" id="playersGrid">
+          <div class="field playerWrap" data-player="1">
+            <label>プレイヤー1</label>
+            <input class="pname" value="P1" inputmode="text" />
+          </div>
+          <div class="field playerWrap" data-player="2">
+            <label>プレイヤー2</label>
+            <input class="pname" value="P2" inputmode="text" />
+          </div>
+          <div class="field playerWrap" data-player="3">
+            <label>プレイヤー3</label>
+            <input class="pname" value="P3" inputmode="text" />
+          </div>
+          <div class="field playerWrap" data-player="4">
+            <label>プレイヤー4</label>
+            <input class="pname" value="P4" inputmode="text" />
+          </div>
+          <div class="field playerWrap" data-player="5">
+            <label>プレイヤー5</label>
+            <input class="pname" value="P5" inputmode="text" />
+          </div>
+        </div>
+      </div>
+
+      <div id="settingsFooter">
+        <button id="reset" class="btn btnDanger" type="button">リセット</button>
+        <button id="close" class="btn btnSecondary" type="button">閉じる</button>
+        <button id="start" class="btn btnPrimary" type="button">開始</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+
+  // Elements
+  const home = $("home");
+  const goTimerBtn = $("goTimer");
+  const openSettingsFromHomeBtn = $("openSettingsFromHome");
+
+  const play = $("play");
+  const centerTap = $("centerTap");
+  const timeEl = $("time");
+  const playerNameEl = $("playerName");
+  const hintEl = $("hint");
+  const progressFill = $("progressFill");
+
+  const settingsBackdrop = $("settingsBackdrop");
+  const countEl = $("count");
+  const limitEl = $("limit");
+  const startBtn = $("start");
+  const resetBtn = $("reset");
+  const closeBtn = $("close");
+  const playerWraps = [...document.querySelectorAll(".playerWrap")];
+  const nameInputs = [...document.querySelectorAll(".pname")];
+
+  // Theme colors per player
+  const THEME = ["#ff4d4d", "#2a63ff", "#ffd24d", "#57d6a3", "#b070ff"];
+
+  // State
+  let players = ["P1","P2","P3"];
+  let limitSec = 60;
+  let idx = 0;
+  let remaining = 60;
+  let timer = null;
+
+  let playing = false;
+  let timedOut = false;
+
+  // Long press
+  const HOLD_MS = 5000;
+  let holdTimer = null;
+  let holdFired = false;
+
+  // Tap grouping for triple-tap
+  let tapCount = 0;
+  let tapWindowTimer = null;
+  const TAP_WINDOW_MS = 320; // triple tap window
+  let suppressClick = false;
+
+  // -------- Utils
+  function format(sec){
+    const m = Math.floor(sec/60);
+    const s = sec % 60;
+    return `${m}:${String(s).padStart(2,"0")}`;
+  }
+
+  function setTheme(){
+    const c = THEME[idx % THEME.length];
+    document.documentElement.style.setProperty("--theme", c);
+    document.documentElement.style.setProperty("--themeSoft", hexToRgba(c, .22));
+    progressFill.style.background = `linear-gradient(90deg, ${hexToRgba(c,.90)}, ${hexToRgba(c,.35)})`;
+    play.classList.add("theming");
+  }
+
+  function hexToRgba(hex, a){
+    const h = hex.replace("#","");
+    const r = parseInt(h.substring(0,2),16);
+    const g = parseInt(h.substring(2,4),16);
+    const b = parseInt(h.substring(4,6),16);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  // -------- Sounds
+  function tone(ms, freq, type="square", gain=0.04){
+    try{
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = type;
+      o.frequency.value = freq;
+      g.gain.value = gain;
+      o.connect(g); g.connect(ctx.destination);
+      o.start();
+      setTimeout(() => { o.stop(); ctx.close(); }, ms);
+    }catch(_){}
+  }
+  function clickSound(){ tone(80, 1100, "square", 0.035); } // "カチッ"
+  function warnTick(){ tone(45, 1400, "square", 0.03); }
+  function alarmSound(){
+    tone(220, 520, "sawtooth", 0.04);
+    setTimeout(() => tone(220, 420, "sawtooth", 0.04), 260);
+  }
+
+  // -------- Screens
+  function showHome(){
+    home.classList.remove("hidden");
+    playing = false;
+    stopTimer();
+    closeSettings(true);
+  }
+
+  function hideHome(){
+    home.classList.add("hidden");
+  }
+
+  function openSettings(){
+    stopTimer();
+    playing = false;
+    setWarning(false);
+    settingsBackdrop.classList.add("open");
+    settingsBackdrop.setAttribute("aria-hidden","false");
+  }
+
+  function closeSettings(force=false){
+    settingsBackdrop.classList.remove("open");
+    settingsBackdrop.setAttribute("aria-hidden","true");
+    if(force) return;
+  }
+
+  // -------- Conditional display of players
+  function applyPlayerVisibility(){
+    const n = Number(countEl.value);
+    playerWraps.forEach(w => {
+      const p = Number(w.dataset.player);
+      w.classList.toggle("hidden", p > n);
+    });
+  }
+
+  // -------- Timer control
+  function startTurn(){
+    remaining = limitSec;
+    timedOut = false;
+    setWarning(false);
+    updateUI();
+    stopTimer();
+    timer = setInterval(tick, 1000);
+  }
+
+  function stopTimer(){
+    if(timer) clearInterval(timer);
+    timer = null;
+  }
+
+  function tick(){
+    if(!playing) return;
+
+    if(remaining <= 10 && remaining > 0){
+      warnTick();
+      setWarning(true);
+    }else{
+      setWarning(false);
+    }
+
+    remaining = Math.max(0, remaining - 1);
+    updateUI();
+
+    if(remaining === 0){
+      stopTimer();
+      timedOut = true;
+      alarmSound();
+      flashTimeout();
+      hintEl.textContent = "タップで次へ / トリプルタップで戻る / 5秒長押しで設定";
+    }
+  }
+
+  function updateUI(){
+    timeEl.textContent = format(remaining);
+    playerNameEl.textContent = `${players[idx] ?? "-"}`; // 「の番」なし
+    setTheme();
+
+    const pct = limitSec > 0 ? (remaining / limitSec) * 100 : 0;
+    progressFill.style.width = `${pct}%`;
+  }
+
+  function setWarning(on){
+    document.body.classList.toggle("warning", on);
+  }
+
+  function flashTimeout(){
+    document.body.classList.add("timeoutFlash");
+    setTimeout(() => document.body.classList.remove("timeoutFlash"), 400);
+  }
+
+  function nextPlayer(){
+    if(!playing) return;
+    idx = (idx + 1) % players.length;
+    clickSound();
+    startTurn();
+  }
+
+  function prevPlayer(){
+    if(!playing) return;
+    idx = (idx - 1 + players.length) % players.length;
+    // 「戻る」は視覚的にも分かるよう少し低い音
+    tone(90, 740, "square", 0.035);
+    startTurn();
+  }
+
+  // -------- Ripple
+  function rippleAt(x, y){
+    const r = document.createElement("div");
+    r.className = "ripple";
+    const rect = play.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height) * 1.2;
+    r.style.width = r.style.height = `${size}px`;
+    r.style.left = `${x - rect.left - size/2}px`;
+    r.style.top  = `${y - rect.top  - size/2}px`;
+    play.appendChild(r);
+    r.addEventListener("animationend", () => r.remove());
+  }
+
+  // -------- Triple tap dispatcher
+  function scheduleTapAction(){
+    if(tapWindowTimer) return;
+    tapWindowTimer = setTimeout(() => {
+      const c = tapCount;
+      tapCount = 0;
+      tapWindowTimer = null;
+
+      // 長押しが発火してたら何もしない
+      if(holdFired) return;
+
+      if(c >= 3){
+        prevPlayer();
+      }else{
+        // 1タップ/2タップは「次へ」1回に統一（進みすぎ防止）
+        nextPlayer();
+      }
+    }, TAP_WINDOW_MS);
+  }
+
+  // -------- Events
+  countEl.addEventListener("change", applyPlayerVisibility);
+
+  goTimerBtn.addEventListener("click", () => {
+    hideHome();
+    openSettings();
+  });
+
+  openSettingsFromHomeBtn.addEventListener("click", () => {
+    hideHome();
+    openSettings();
+  });
+
+  startBtn.addEventListener("click", () => {
+    const n = Number(countEl.value);
+    players = nameInputs.slice(0, n).map((inp, i) => (inp.value || `P${i+1}`).trim());
+    limitSec = Math.max(5, Number(limitEl.value || 60));
+    idx = 0;
+
+    playing = true;
+    closeSettings();
+    startTurn();
+    hintEl.textContent = "どこでもタップで次へ / トリプルタップで戻る / 5秒長押しで設定";
+  });
+
+  resetBtn.addEventListener("click", () => {
+    countEl.value = "3";
+    limitEl.value = "60";
+    nameInputs.forEach((inp, i) => inp.value = `P${i+1}`);
+    applyPlayerVisibility();
+    tone(80, 780, "square", 0.03);
+  });
+
+  closeBtn.addEventListener("click", () => {
+    // プレイ中なら閉じる、未開始ならホームに戻る
+    if(playing){
+      closeSettings();
+    }else{
+      closeSettings(true);
+      showHome();
+    }
+  });
+
+  // Full screen interactions
+  centerTap.addEventListener("pointerdown", (e) => {
+    if(!playing) return;
+
+    holdFired = false;
+    suppressClick = false;
+
+    rippleAt(e.clientX, e.clientY);
+
+    holdTimer = setTimeout(() => {
+      holdFired = true;
+      suppressClick = true;
+      openSettings();
+      tone(120, 520, "square", 0.03);
+    }, HOLD_MS);
+  });
+
+  ["pointerup","pointercancel","pointerleave"].forEach(ev => {
+    centerTap.addEventListener(ev, () => {
+      if(holdTimer) clearTimeout(holdTimer);
+      holdTimer = null;
+    });
+  });
+
+  // Click/tap: accumulate for triple tap
+  centerTap.addEventListener("click", () => {
+    if(!playing) return;
+    if(suppressClick) return;
+
+    tapCount += 1;
+    scheduleTapAction();
+  });
+
+  // Init
+  applyPlayerVisibility();
+  // 起動時はホーム
+  showHome();
+  // 裏でUI初期化
+  updateUI();
+})();
+</script>
+</body>
+</html>
