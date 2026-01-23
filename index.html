@@ -28,15 +28,35 @@
     font-family: system-ui, -apple-system, sans-serif;
   }
 
-  body{
-    margin:0;
-    background: var(--bg);
-    color: var(--text);
-    overflow: hidden;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-  }
+ /* ===== 修正後のbody設定 ===== */
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+
+  /* テキスト選択を禁止 */
+  user-select: none;
+  -webkit-user-select: none;
+
+  /* iOSの長押しメニュー（コピー等）を禁止 */
+  -webkit-touch-callout: none;
+}
+
+/* 入力欄（プレイヤー名）だけは選択・編集できるように戻す */
+input, select, textarea {
+  user-select: auto;
+  -webkit-user-select: auto;
+  -webkit-touch-callout: default;
+}
+
+/* プレイスクリーン内のタップエリアは特に厳重にガード */
+#centerTap {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+}
 
   /* ===== HOME ===== */
   #home{
@@ -70,7 +90,13 @@
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     animation: float 2s infinite ease-in-out;
     cursor: pointer;
+    transition: transform 0.1s ease, filter 0.1s ease, box-shadow 0.1s ease;
+    /* 既存の設定にこれを追加 */
+  　will-change: transform;
   }
+  .homeBtnPrimary:active {
+  transform: scale(0.92); /* 大きなボタンは沈み込みを深めに */
+}
   @keyframes float {
     0% { transform: translateY(0px); }
     50% { transform: translateY(-6px); }
@@ -91,7 +117,13 @@
     font-size: 14px;
     cursor: pointer;
     backdrop-filter: blur(4px);
+    transition: transform 0.1s ease, filter 0.1s ease, box-shadow 0.1s ease;
   }
+
+  /* 言語スイッチなどの小さなパーツ */
+　#langSwitch:active {
+  background: rgba(255, 255, 255, 0.2);
+}
 
   #home.hidden{ display:none; }
 
@@ -197,7 +229,13 @@
   .btn{
     flex:1; height: 54px; border-radius: 14px; border:none;
     font-weight:700; font-size:16px; cursor:pointer; color: white;
+    transition: transform 0.1s ease, filter 0.1s ease, box-shadow 0.1s ease;
   }
+  .btn:active, .homeBtnPrimary:active, #langSwitch:active {
+  transform: scale(0.95); /* 5%ほど小さくする */
+  filter: brightness(0.85); /* 少し暗くする */
+  box-shadow: none; /* 影を消して沈み込みを表現 */
+}
   .btnPrimary{ background: #2a63ff; }
   .btnSecondary{ background: rgba(255,255,255,.1); max-width: 80px; }
   .btnDanger{ background: rgba(255,77,77,.15); color: #ff6666; max-width: 80px; }
@@ -535,3 +573,4 @@
 </script>
 </body>
 </html>
+
