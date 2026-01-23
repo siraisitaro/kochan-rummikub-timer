@@ -2,10 +2,10 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <title>Rummikub Turn Timer</title>
+<meta name="theme-color" content="#121212">
 
-<!-- Roboto Mono（等幅） -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@600;700&display=swap" rel="stylesheet">
@@ -32,6 +32,9 @@
     margin:0;
     background: var(--bg);
     color: var(--text);
+    overflow: hidden; /* スクロール防止 */
+    touch-action: manipulation; /* ダブルタップズーム無効化 */
+    -webkit-tap-highlight-color: transparent;
   }
 
 /* ===== HOME (title screen) ===== */
@@ -42,19 +45,13 @@
   align-items:flex-end;
   justify-content:center;
   padding: 24px 18px 36px;
-
-  background:
-    linear-gradient(
-      180deg,
-      rgba(0,0,0,.15) 0%,
-      rgba(0,0,0,.55) 55%,
-      rgba(0,0,0,.85) 100%
-    ),
-    url("home-bg.png") center / cover no-repeat;
-
+  
+  /* 画像がない場合のフォールバック（グラデーション） */
+  background: linear-gradient(135deg, #1e2530 0%, #000000 100%);
   z-index: 60;
 }
-/* ホーム背景（イラスト用） */
+
+/* 背景画像がある場合は上書き */
 .home-bg{
   position: fixed;
   inset: 0;
@@ -62,6 +59,7 @@
   filter: blur(4px) brightness(0.6);
   transform: scale(1.05);
   z-index: -1;
+  opacity: 0.8;
 }
 
 #home.hidden{ display:none; }
@@ -69,46 +67,47 @@
  .homeCard{
   background: rgba(20,20,20,0.75);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255,255,255,0.15);
+  padding: 24px;
+  border-radius: 24px;
+  width: min(100%, 400px);
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
 }
 
   .homeTitle{
     font-family: var(--mono);
     font-weight: 700;
-    font-size: clamp(22px, 5vw, 36px);
+    font-size: clamp(22px, 6vw, 32px);
     letter-spacing: .4px;
-    margin: 0;
+    margin: 0 0 24px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
   }
-  .homeSub{
-    margin: 10px 0 18px;
-    color: rgba(255,255,255,.78);
-    line-height: 1.45;
-    font-size: 14px;
-  }
+  
   .homeActions{
     display:flex;
-    gap: 12px;
-    flex-wrap: wrap;
+    justify-content: center;
   }
+  
   .homeBtn{
-    height: 56px;
+    height: 64px;
+    width: 100%;
     border-radius: 18px;
     border: 1px solid rgba(255,255,255,.12);
-    background: rgba(0,0,0,.22);
     color: var(--text);
     font-weight: 800;
-    font-size: 16px;
-    padding: 0 18px;
+    font-size: 18px;
     cursor: pointer;
+    transition: transform 0.1s active;
   }
+  .homeBtn:active { transform: scale(0.98); }
+
   .homeBtnPrimary{
-    flex: 1 1 220px;
     background: linear-gradient(180deg, rgba(42,99,255,.95), rgba(42,99,255,.72));
     border-color: rgba(42,99,255,.7);
-    box-shadow: 0 10px 26px rgba(42,99,255,.16);
-  }
-  .homeBtnSecondary{
-    flex: 1 1 180px;
+    box-shadow: 0 10px 26px rgba(42,99,255,.25);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
   }
 
   /* ===== PLAY ===== */
@@ -144,12 +143,13 @@
     width: 0%;
     background: linear-gradient(90deg, rgba(255,255,255,.15), rgba(255,255,255,.05));
     position: relative;
+    transition: width 0.2s linear; /* スムーズな減少 */
   }
   #progressFill::after{
     content:"";
     position:absolute;
     inset:0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.3), transparent);
     transform: translateX(-60%);
     animation: sheen 2.2s infinite;
     opacity: .55;
@@ -169,33 +169,38 @@
     text-align:center;
     user-select:none;
     touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent; /* タップ時のハイライト削除 */
   }
 
   #time{
     font-family: var(--mono);
     font-weight: 700;
     font-size: min(22vw, 170px);
-    letter-spacing: 1px;
+    letter-spacing: -2px;
     line-height: 1;
-    margin: 6px 0 0;
-    text-shadow: 0 10px 26px rgba(0,0,0,.55);
+    margin: 10px 0 0;
+    text-shadow: 0 10px 40px rgba(0,0,0,.6);
+    font-variant-numeric: tabular-nums; /* 数字の幅を固定してガタツキ防止 */
   }
 
-  /* 「の番」を廃止して、名前を大きく */
   #playerName{
     margin-top: 14px;
     font-family: var(--mono);
     font-weight: 700;
     font-size: min(8vw, 48px);
     color: rgba(255,255,255,.95);
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
   }
 
   #hint{
-    margin-top: 14px;
-    font-size: 14px;
+    position: absolute;
+    bottom: 30px;
+    font-size: 13px;
     color: var(--muted);
-    opacity: .9;
-    line-height: 1.35;
+    opacity: .7;
+    line-height: 1.5;
+    pointer-events: none;
+    max-width: 80%;
   }
 
   .warning #time{
@@ -204,33 +209,34 @@
   }
   .warning #play{
     background:
-      radial-gradient(900px 600px at 50% 40%, rgba(255,77,77,.10), transparent 60%),
+      radial-gradient(900px 600px at 50% 40%, rgba(255,77,77,.15), transparent 60%),
       linear-gradient(180deg, rgba(255,255,255,.03), transparent 25%),
       var(--bg);
   }
   @keyframes pulse{
-    0%{ transform: scale(1); }
-    50%{ transform: scale(1.055); }
-    100%{ transform: scale(1); }
+    0%{ transform: scale(1); opacity: 1; }
+    50%{ transform: scale(1.05); opacity: 0.9; }
+    100%{ transform: scale(1); opacity: 1; }
   }
 
   .timeoutFlash #play{
     box-shadow:
       inset 0 0 0 2px rgba(255,255,255,.03),
       0 0 0 1px rgba(255,255,255,.03),
-      0 0 60px rgba(255,77,77,.22);
+      0 0 60px rgba(255,77,77,.4);
+    background-color: rgba(255,0,0,0.1);
   }
 
   .ripple{
     position:absolute;
-    border-radius: 9999px;
-    background: rgba(255,255,255,.14);
+    border-radius: 50%;
+    background: rgba(255,255,255,.2);
     transform: scale(0);
-    animation: ripple .55s ease-out;
+    animation: ripple .5s ease-out;
     pointer-events:none;
   }
   @keyframes ripple{
-    to { transform: scale(1); opacity: 0; }
+    to { transform: scale(1.5); opacity: 0; }
   }
 
   #playBadge{
@@ -238,219 +244,196 @@
     top: 14px;
     right: 14px;
     font-family: var(--mono);
-    font-size: 12px;
-    color: rgba(255,255,255,.72);
-    background: rgba(0,0,0,.28);
+    font-size: 11px;
+    color: rgba(255,255,255,.6);
+    background: rgba(0,0,0,.4);
     border: 1px solid rgba(255,255,255,.10);
-    padding: 8px 10px;
+    padding: 6px 12px;
     border-radius: 999px;
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(4px);
     user-select:none;
+    pointer-events: none;
   }
 
   /* ===== SETTINGS MODAL ===== */
   #settingsBackdrop{
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,.66);
+    background: rgba(0,0,0,.8);
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: none;
     align-items: center;
     justify-content: center;
     padding: 16px;
     z-index: 55;
+    opacity: 0;
+    transition: opacity 0.2s;
   }
-  #settingsBackdrop.open{ display:flex; }
+  #settingsBackdrop.open{ display:flex; opacity: 1; }
 
   #settingsModal{
     width: min(780px, 100%);
     background: var(--panel);
     border: 1px solid rgba(255,255,255,.10);
-    border-radius: 18px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.55);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.6);
     overflow: hidden;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
   }
 
   #settingsHeader{
-    padding: 18px 18px 10px;
+    padding: 20px 24px 16px;
     border-bottom: 1px solid rgba(255,255,255,.08);
+    flex: 0 0 auto;
+    background: var(--panel);
   }
   #settingsHeader h2{
     margin: 0;
-    font-size: 22px;
+    font-size: 20px;
     letter-spacing: .2px;
   }
   #settingsHeader p{
-    margin: 8px 0 0;
+    margin: 6px 0 0;
     color: var(--muted);
     font-size: 13px;
   }
 
   #settingsBody{
-    padding: 16px 18px 120px;
+    padding: 20px 24px 20px;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .grid{
     display:grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    gap: 16px;
   }
-  @media (max-width: 560px){
+  @media (max-width: 500px){
     .grid{ grid-template-columns: 1fr; }
   }
 
   .field label{
     display:block;
     font-size: 12px;
+    font-weight: 600;
     color: var(--muted);
-    margin-bottom: 6px;
+    margin-bottom: 8px;
   }
   .field input, .field select{
     width:100%;
-    height: 48px;
-    padding: 10px 12px;
-    border-radius: 14px;
+    height: 52px;
+    padding: 0 16px;
+    border-radius: 12px;
     border: 1px solid rgba(255,255,255,.14);
-    background: rgba(0,0,0,.25);
+    background: rgba(0,0,0,.3);
     color: var(--text);
     outline: none;
+    font-size: 16px;
+    box-sizing: border-box; /* パディングを含める */
+    transition: border-color 0.2s, box-shadow 0.2s;
   }
   .field input:focus, .field select:focus{
-    border-color: color-mix(in srgb, var(--accent) 70%, rgba(255,255,255,.14));
-    box-shadow: 0 0 0 3px rgba(42,99,255,.22);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(42,99,255,.25);
   }
 
   .playersGrid{
     display:grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
-    margin-top: 14px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.08);
   }
-  @media (max-width: 560px){
+  @media (max-width: 500px){
     .playersGrid{ grid-template-columns: 1fr; }
   }
 
   .playerWrap.hidden{ display:none; }
 
   #settingsFooter{
-    position: absolute;
-    left: 0; right: 0; bottom: 0;
-    padding: 14px 18px;
-    background: linear-gradient(180deg, rgba(23,26,31,0), rgba(23,26,31,1) 45%);
+    padding: 16px 24px;
+    background: rgba(23,26,31,0.95);
     border-top: 1px solid rgba(255,255,255,.08);
     display:flex;
     gap: 12px;
     align-items:center;
+    flex: 0 0 auto;
   }
 
   .btn{
-    height: 54px;
-    border-radius: 16px;
+    height: 56px;
+    border-radius: 14px;
     border: 1px solid rgba(255,255,255,.12);
-    background: rgba(0,0,0,.22);
+    background: rgba(255,255,255,.05);
     color: var(--text);
-    font-weight: 800;
+    font-weight: 700;
     font-size: 16px;
-    padding: 0 14px;
+    padding: 0 16px;
     cursor:pointer;
+    flex: 1;
+    transition: background 0.15s;
   }
   .btnPrimary{
-    flex: 1;
+    flex: 2;
     background: linear-gradient(180deg, rgba(42,99,255,.95), rgba(42,99,255,.75));
     border-color: rgba(42,99,255,.7);
-    box-shadow: 0 10px 26px rgba(42,99,255,.16);
+    box-shadow: 0 4px 12px rgba(42,99,255,.3);
   }
-  .btnSecondary{
-    width: 120px;
-    background: rgba(255,255,255,.04);
-  }
-  .btnSecondary:hover{ background: rgba(255,255,255,.06); }
+  .btnPrimary:active{ transform: translateY(1px); }
 
+  .btnSecondary:hover{ background: rgba(255,255,255,.1); }
+  
   .btnDanger{
-    width: 120px;
-    background: rgba(255,77,77,.12);
-    border-color: rgba(255,77,77,.22);
+    background: rgba(255,77,77,.1);
+    border-color: rgba(255,77,77,.3);
+    color: #ff8080;
+    max-width: 100px;
   }
-  /* ===== FIX: SETTINGS MODAL SCROLL ===== */
-
-/* モーダル全体を縦Flexに */
-#settingsModal{
-  display: flex;
-  flex-direction: column;
-
-  max-height: 92vh;          /* 画面からはみ出さない */
-}
-
-/* ヘッダーは固定 */
-#settingsHeader{
-  flex: 0 0 auto;
-}
-
-/* 本文だけスクロールさせる */
-#settingsBody{
-  flex: 1 1 auto;
-  overflow-y: auto;
-  padding-bottom: 24px;      /* フッターに被らない余白 */
-  -webkit-overflow-scrolling: touch;
-}
-
-/* フッターは下に張り付く（absolute禁止） */
-#settingsFooter{
-  position: sticky;
-  bottom: 0;
-
-  flex: 0 0 auto;
-  background: linear-gradient(
-    180deg,
-    rgba(23,26,31,0),
-    rgba(23,26,31,1) 45%
-  );
-}
+  .btnDanger:hover{ background: rgba(255,77,77,.2); }
 
 </style>
 </head>
 
 <body>
-  <!-- HOME -->
   <div id="home">
   <div class="home-bg"></div>
     <div class="homeCard">
-      <h1 class="homeTitle">Rummikub Turn Timer</h1>
-
-
-  <div class="homeActions">
-  <button id="goTimer" class="homeBtn homeBtnPrimary">タップして開始</button>
-</div>
-
-
+      <h1 class="homeTitle">Rummikub<br>Timer</h1>
+      <div class="homeActions">
+        <button id="goTimer" class="homeBtn homeBtnPrimary">タップして開始</button>
+      </div>
     </div>
   </div>
 
-  <!-- PLAY -->
   <div id="play" class="theming">
     <div id="progressOuter"><div id="progressFill"></div></div>
-    <div id="playBadge">Tap: Next | Triple: Back | Hold 3s: Settings</div>
+    <div id="playBadge">Hold 3s: Settings</div>
 
     <div id="centerTap">
       <div id="time">0:00</div>
       <div id="playerName">-</div>
-      <div id="hint">どこでもタップで次へ / トリプルタップで戻る / 5秒長押しで設定</div>
+      <div id="hint">タップ: 次へ / 3回タップ: 戻る / 長押し: 設定</div>
     </div>
   </div>
 
-  <!-- SETTINGS MODAL -->
   <div id="settingsBackdrop" aria-hidden="true">
     <div id="settingsModal" role="dialog" aria-modal="true">
       <div id="settingsHeader">
         <h2>設定</h2>
-        <p>人数と制限時間をセットして「開始」。プレイ中は全画面タップで進行します。</p>
+        <p>人数と時間を設定して開始してください。</p>
       </div>
 
       <div id="settingsBody">
         <div class="grid">
           <div class="field">
-            <label for="count">参加人数（2〜5）</label>
+            <label for="count">参加人数</label>
             <select id="count">
               <option>2</option>
               <option selected>3</option>
@@ -460,7 +443,7 @@
           </div>
           <div class="field">
             <label for="limit">制限時間（秒）</label>
-            <input id="limit" type="number" min="5" step="5" value="60">
+            <input id="limit" type="number" inputmode="numeric" min="5" step="5" value="60">
           </div>
         </div>
 
@@ -491,7 +474,7 @@
       <div id="settingsFooter">
         <button id="reset" class="btn btnDanger" type="button">リセット</button>
         <button id="close" class="btn btnSecondary" type="button">閉じる</button>
-        <button id="start" class="btn btnPrimary" type="button">開始</button>
+        <button id="start" class="btn btnPrimary" type="button">ゲーム開始</button>
       </div>
     </div>
   </div>
@@ -503,13 +486,11 @@
   // Elements
   const home = $("home");
   const goTimerBtn = $("goTimer");
- 
 
   const play = $("play");
   const centerTap = $("centerTap");
   const timeEl = $("time");
   const playerNameEl = $("playerName");
-  const hintEl = $("hint");
   const progressFill = $("progressFill");
 
   const settingsBackdrop = $("settingsBackdrop");
@@ -534,19 +515,102 @@
   let playing = false;
   let timedOut = false;
 
-  // Long press
-  const HOLD_MS = 3000;
+  // Long press / Tap
+  const HOLD_MS = 2500; // 3秒は長いので2.5秒に短縮
   let holdTimer = null;
   let holdFired = false;
-  let longPressActive = false;   // ← 追加
-
-  // Tap grouping for triple-tap
+  let longPressActive = false;
+  
   let tapCount = 0;
   let tapWindowTimer = null;
-  const TAP_WINDOW_MS = 320; // triple tap window
+  const TAP_WINDOW_MS = 280; // 少し短くして反応良く
   let suppressClick = false;
 
-  // -------- Utils
+  // Wake Lock
+  let wakeLock = null;
+
+  // -------- Audio Singleton (Fix)
+  let audioCtx = null;
+
+  function getAudioContext() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioCtx;
+  }
+
+  // ユーザー操作でオーディオコンテキストをアクティブ化
+  function unlockAudio() {
+    const ctx = getAudioContext();
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+    // 無音バッファを再生してiOS等のロックを確実に解除
+    const buffer = ctx.createBuffer(1, 1, 22050);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+    source.start(0);
+  }
+
+  function tone(ms, freq, type="square", gain=0.05){
+    try{
+      const ctx = getAudioContext();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      
+      o.type = type;
+      o.frequency.value = freq;
+      
+      // クリックノイズ防止のエンベロープ
+      const now = ctx.currentTime;
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(gain, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, now + ms/1000);
+
+      o.connect(g); 
+      g.connect(ctx.destination);
+      
+      o.start(now);
+      o.stop(now + ms/1000 + 0.1);
+      
+      // GC対策: 終了後に切断
+      setTimeout(() => {
+        o.disconnect();
+        g.disconnect();
+      }, ms + 200);
+
+    }catch(e){
+      console.warn(e);
+    }
+  }
+
+  // Sounds
+  function clickSound(){ tone(80, 1100, "square", 0.04); }
+  function backSound(){ tone(90, 740, "square", 0.04); }
+  function warnTick(){ tone(50, 1400, "square", 0.03); }
+  function alarmSound(){
+    tone(250, 520, "sawtooth", 0.05);
+    setTimeout(() => tone(250, 420, "sawtooth", 0.05), 280);
+  }
+  function openSound(){ tone(150, 600, "sine", 0.05); }
+
+  // -------- Wake Lock
+  async function requestWakeLock() {
+    if ('wakeLock' in navigator) {
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        console.log("WakeLock active");
+        wakeLock.addEventListener('release', () => {
+          console.log('Wake Lock released');
+        });
+      } catch (err) {
+        console.log(err);
+      }
+    }
+  }
+
+  // -------- Logic
   function format(sec){
     const m = Math.floor(sec/60);
     const s = sec % 60;
@@ -563,34 +627,14 @@
 
   function hexToRgba(hex, a){
     const h = hex.replace("#","");
+    if(h.length !== 6) return `rgba(100,100,100,${a})`;
     const r = parseInt(h.substring(0,2),16);
     const g = parseInt(h.substring(2,4),16);
     const b = parseInt(h.substring(4,6),16);
     return `rgba(${r},${g},${b},${a})`;
   }
 
-  // -------- Sounds
-  function tone(ms, freq, type="square", gain=0.04){
-    try{
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = type;
-      o.frequency.value = freq;
-      g.gain.value = gain;
-      o.connect(g); g.connect(ctx.destination);
-      o.start();
-      setTimeout(() => { o.stop(); ctx.close(); }, ms);
-    }catch(_){}
-  }
-  function clickSound(){ tone(80, 1100, "square", 0.035); } // "カチッ"
-  function warnTick(){ tone(45, 1400, "square", 0.03); }
-  function alarmSound(){
-    tone(220, 520, "sawtooth", 0.04);
-    setTimeout(() => tone(220, 420, "sawtooth", 0.04), 260);
-  }
-
-  // -------- Screens
+  // Screens
   function showHome(){
     home.classList.remove("hidden");
     playing = false;
@@ -608,15 +652,15 @@
     setWarning(false);
     settingsBackdrop.classList.add("open");
     settingsBackdrop.setAttribute("aria-hidden","false");
+    // 設定画面を開いたときにもWakeLock再試行
+    requestWakeLock();
   }
 
   function closeSettings(force=false){
     settingsBackdrop.classList.remove("open");
     settingsBackdrop.setAttribute("aria-hidden","true");
-    if(force) return;
   }
 
-  // -------- Conditional display of players
   function applyPlayerVisibility(){
     const n = Number(countEl.value);
     playerWraps.forEach(w => {
@@ -625,7 +669,7 @@
     });
   }
 
-  // -------- Timer control
+  // Timer
   function startTurn(){
     remaining = limitSec;
     timedOut = false;
@@ -658,13 +702,12 @@
       timedOut = true;
       alarmSound();
       flashTimeout();
-      hintEl.textContent = "タップで次へ / トリプルタップで戻る / 3秒長押しで設定";
     }
   }
 
   function updateUI(){
     timeEl.textContent = format(remaining);
-    playerNameEl.textContent = `${players[idx] ?? "-"}`; // 「の番」なし
+    playerNameEl.textContent = `${players[idx] ?? "-"}`;
     setTheme();
 
     const pct = limitSec > 0 ? (remaining / limitSec) * 100 : 0;
@@ -690,25 +733,24 @@
   function prevPlayer(){
     if(!playing) return;
     idx = (idx - 1 + players.length) % players.length;
-    // 「戻る」は視覚的にも分かるよう少し低い音
-    tone(90, 740, "square", 0.035);
+    backSound();
     startTurn();
   }
 
-  // -------- Ripple
+  // Visual Effect
   function rippleAt(x, y){
     const r = document.createElement("div");
     r.className = "ripple";
-    const rect = play.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height) * 1.2;
+    // 画面サイズ基準で大きさを決める
+    const size = Math.max(window.innerWidth, window.innerHeight);
     r.style.width = r.style.height = `${size}px`;
-    r.style.left = `${x - rect.left - size/2}px`;
-    r.style.top  = `${y - rect.top  - size/2}px`;
+    r.style.left = `${x - size/2}px`;
+    r.style.top  = `${y - size/2}px`;
     play.appendChild(r);
     r.addEventListener("animationend", () => r.remove());
   }
 
-  // -------- Triple tap dispatcher
+  // Tap Dispatcher
   function scheduleTapAction(){
     if(tapWindowTimer) return;
     tapWindowTimer = setTimeout(() => {
@@ -716,27 +758,30 @@
       tapCount = 0;
       tapWindowTimer = null;
 
-      // 長押しが発火してたら何もしない
       if(holdFired) return;
 
       if(c >= 3){
         prevPlayer();
       }else{
-        // 1タップ/2タップは「次へ」1回に統一（進みすぎ防止）
         nextPlayer();
       }
     }, TAP_WINDOW_MS);
   }
 
-  // -------- Events
+  // Events
   countEl.addEventListener("change", applyPlayerVisibility);
 
   goTimerBtn.addEventListener("click", () => {
+    // 最初のインタラクションでオーディオ許可
+    unlockAudio();
     hideHome();
     openSettings();
   });
 
   startBtn.addEventListener("click", () => {
+    unlockAudio();
+    requestWakeLock(); // 常時点灯要求
+
     const n = Number(countEl.value);
     players = nameInputs.slice(0, n).map((inp, i) => (inp.value || `P${i+1}`).trim());
     limitSec = Math.max(5, Number(limitEl.value || 60));
@@ -745,7 +790,6 @@
     playing = true;
     closeSettings();
     startTurn();
-    hintEl.textContent = "どこでもタップで次へ / トリプルタップで戻る / 5秒長押しで設定";
   });
 
   resetBtn.addEventListener("click", () => {
@@ -753,11 +797,10 @@
     limitEl.value = "60";
     nameInputs.forEach((inp, i) => inp.value = `P${i+1}`);
     applyPlayerVisibility();
-    tone(80, 780, "square", 0.03);
+    backSound();
   });
 
   closeBtn.addEventListener("click", () => {
-    // プレイ中なら閉じる、未開始ならホームに戻る
     if(playing){
       closeSettings();
     }else{
@@ -766,55 +809,58 @@
     }
   });
 
- centerTap.addEventListener("pointerdown", (e) => {
-  if (!playing) return;
+  // Tap / Hold Logic
+  centerTap.addEventListener("pointerdown", (e) => {
+    if (!playing) return;
 
-  longPressActive = false;
-  suppressClick = false;
+    // 即座に視覚フィードバック（これがスムーズさの鍵）
+    rippleAt(e.clientX, e.clientY);
 
-  rippleAt(e.clientX, e.clientY);
+    longPressActive = false;
+    suppressClick = false;
+    holdFired = false;
 
-  holdTimer = setTimeout(() => {
-    longPressActive = true;
-    suppressClick = true;
+    holdTimer = setTimeout(() => {
+      longPressActive = true;
+      suppressClick = true;
+      holdFired = true;
+      openSettings();
+      openSound();
+    }, HOLD_MS);
+  });
 
-    openSettings();
-    tone(120, 520, "square", 0.03);
-  }, HOLD_MS);
-});
-
-
-  ["pointerup","pointercancel","pointerleave"].forEach(ev => {
-  centerTap.addEventListener(ev, () => {
+  const clearHold = () => {
     if (holdTimer) clearTimeout(holdTimer);
     holdTimer = null;
+  };
+
+  ["pointerup","pointercancel","pointerleave"].forEach(ev => {
+    centerTap.addEventListener(ev, clearHold);
   });
-});
 
+  centerTap.addEventListener("click", () => {
+    if (!playing) return;
+    if (longPressActive || suppressClick) return;
+    tapCount += 1;
+    scheduleTapAction();
+  });
 
-  // Click/tap: accumulate for triple tap
- centerTap.addEventListener("click", () => {
-  if (!playing) return;
-
-  // 長押しが成立していたら完全無視
-  if (longPressActive || suppressClick) return;
-
-  tapCount += 1;
-  scheduleTapAction();
-});
+  // Visibility Change (WakeLock再取得)
+  document.addEventListener('visibilitychange', async () => {
+    if (wakeLock !== null && document.visibilityState === 'visible') {
+      await requestWakeLock();
+    }
+    // オーディオコンテキストの再開
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+  });
 
   // Init
   applyPlayerVisibility();
-  // 起動時はホーム
   showHome();
-  // 裏でUI初期化
   updateUI();
 })();
 </script>
 </body>
 </html>
-
-
-
-
-
