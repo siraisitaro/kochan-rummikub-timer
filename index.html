@@ -408,9 +408,9 @@
         プレイ画面は「どこでもタップで次へ」。
       </p>
       <div class="homeActions">
-        <button id="goTimer" class="homeBtn homeBtnPrimary" type="button">タイマーを使う</button>
-        <button id="openSettingsFromHome" class="homeBtn homeBtnSecondary" type="button">設定</button>
-      </div>
+  <button id="goTimer" class="homeBtn homeBtnPrimary" type="button">タイマーを使う</button>
+</div>
+
     </div>
   </div>
 
@@ -490,7 +490,7 @@
   // Elements
   const home = $("home");
   const goTimerBtn = $("goTimer");
-  const openSettingsFromHomeBtn = $("openSettingsFromHome");
+ 
 
   const play = $("play");
   const centerTap = $("centerTap");
@@ -722,11 +722,6 @@
     openSettings();
   });
 
-  openSettingsFromHomeBtn.addEventListener("click", () => {
-    hideHome();
-    openSettings();
-  });
-
   startBtn.addEventListener("click", () => {
     const n = Number(countEl.value);
     players = nameInputs.slice(0, n).map((inp, i) => (inp.value || `P${i+1}`).trim());
@@ -800,3 +795,4 @@
 </script>
 </body>
 </html>
+
